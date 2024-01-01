@@ -15,6 +15,7 @@ def train(model, args):
     G = build_trans_graph(trans_df)
     trans2csv(G)
     # Step 2: 生成字典
+    poi_id_dict, cat_id_dict = initiate_dict()
     # Step 3: 上下文嵌入
     # ========== 利用时间差分法训练网络
     print('----------Training----------')

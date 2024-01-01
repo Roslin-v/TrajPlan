@@ -132,13 +132,35 @@ def load_poi_features(path):
     return X
 
 
-if __name__ == '__main__':
-    # traj_df = pd.read_csv(os.path.join('../data/traj.csv'))
-    # print('----------Building trajectory graph ----------')
-    # G = build_traj_graph(traj_df)
-    # traj2csv(G)
+# 生成字典
+def initiate_dict():
+    spot_df = pd.read_csv('../data/spot.csv', encoding='ANSI')
+    food_df = pd.read_csv('../data/food.csv', encoding='ANSI')
+    trans_df = pd.read_csv('../data/transportation.csv', encoding='ANSI')
+    # 生成POI ID字典
+    spot_ids = list(set(spot_df['id'].tolist()))
+    food_ids = list(set(food_df['id'].tolist()))
+    trans_ids = list(set(spot_df['id'].tolist()))
+    poi_ids = spot_ids + food_ids + trans_ids
+    poi_id_dict = dict(zip(poi_ids, range(len(poi_ids))))
+    # 生成POI种类字典
+    spot_ids = list(set(spot_df['category'].tolist()))
+    food_ids = list(set(food_df['category_id'].tolist()))
+    trans_ids = list(set(spot_df['category'].tolist()))
+    cat_ids = spot_ids + food_ids + trans_ids
+    cat_id_dict = dict(zip(cat_ids, range(len(cat_ids))))
+    return poi_id_dict, cat_id_dict
 
+
+if __name__ == '__main__':
+    '''
+    traj_df = pd.read_csv(os.path.join('../data/traj.csv'))
+    print('----------Building trajectory graph ----------')
+    G = build_traj_graph(traj_df)
+    traj2csv(G)
     trans_df = pd.read_csv(os.path.join('../data/transportation.csv'), encoding='ANSI')
     print('----------Building transportation graph ----------')
     G = build_trans_graph(trans_df)
     trans2csv(G)
+    '''
+    initiate_dict()
