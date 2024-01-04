@@ -1,5 +1,6 @@
 import csv
 from geopy.distance import geodesic
+import math
 
 
 class Line:
@@ -51,19 +52,24 @@ class LineManager:
                     route.line_number = line.line_id
         return route
 
-    def print_stops(self, line_id, from_stop, to_stop):
+    def get_stops(self, line_id, from_stop, to_stop):
         line = self.lines[line_id]
         cat = line.category
         total_time = 0  # 公共交通总时间 min
         speed = 0  # 交通工具的速度 m/min  1km/h=16.7m/min
+        fee = 0
         if cat == '301' or cat == '304':  # 公交
             speed = 30 * 16.7
+            fee = 2
         elif cat == '302':  # BRT
             speed = 40 * 16.7
+            fee = 3
         elif cat == '303':  # 轮船，默认一趟15min
             total_time = 15
+            fee = 35
         elif cat == '305':  # 地铁
             speed = 50 * 16.7
+            fee = 4
         start_index = 0
         end_index = 0
         for i in range(0, len(line.station_ids) - 1):
@@ -76,12 +82,10 @@ class LineManager:
             sign = -1
         last_station = line.stations[from_stop]
         temp_list = list(enumerate(line.stations))
+        line_route = [line.line_name]
         for i in range(abs(start_index-end_index+1)):
             cur_station = line.stations[temp_list[start_index+i*sign][1]]
-            if cur_station.station_id == to_stop:
-                print(cur_station.station_name)
-            else:
-                print(cur_station.station_name, " -> ", end="")
+            line_route.append(cur_station.station_name)
             if cur_station.station_id == last_station.station_id:
                 continue
             else:
@@ -90,14 +94,29 @@ class LineManager:
                     total_time += distance / speed
                 # print(distance)
             last_station = cur_station
-        print("Total time: ", total_time, "min")
-        return total_time
+        return line_route, total_time, fee
 
     def get_line_name(self, line_id):
         if line_id in self.lines:
             return self.lines[line_id].line_name
         else:
             return None
+
+    def print_all_dis(self):
+        for key in self.lines:
+            each = self.lines[key]
+            print(each.line_name)
+            last = each.stations[each.station_ids[0]]
+            for key2 in each.stations:
+                cur = each.stations[key2]
+                if last == cur:
+                    continue
+                else:
+                    distance = geodesic((last.latitude, last.longitude), (cur.latitude, cur.longitude)).km
+                    with open('../data/test3.csv', 'a', newline='', encoding='utf-8-sig') as csvfile:
+                        writer = csv.writer(csvfile)
+                        writer.writerow([last.station_id, last.station_name, cur.station_id, cur.station_name, distance])
+                last = cur
 
 
 class Station:
@@ -213,13 +232,27 @@ def get_bus_route(station_manager, line_manager, start, terminal):
                     a.append(v_matrix[u][v])
                     dis[v] = (dis[u][0] + v_matrix[u][v].stops, a)
     solution = dis[terminal_index][1]
+    total_route = {}    # 以线路名称为key，途径的站点list为value的字典
     total_time = 0
+    total_fee = 0
     for each_route in solution:
-        print("在 " + station_manager.get_station_name(each_route.from_stop) + " 乘坐 " + str(
-            line_manager.get_line_name(each_route.line_number)) + "号线 到 " + station_manager.get_station_name(each_route.to_stop) + "(" + str(each_route.stops) + "站)")
-        total_time += line_manager.print_stops(each_route.line_number, each_route.from_stop, each_route.to_stop)
+        # print("在 " + station_manager.get_station_name(each_route.from_stop) + " 乘坐 " + str(line_manager.get_line_name(each_route.line_number)) + "号线 到 " + station_manager.get_station_name(each_route.to_stop) + "(" + str(each_route.stops) + "站)")
+        temp_route, temp_time, temp_fee = line_manager.get_stops(each_route.line_number, each_route.from_stop, each_route.to_stop)
+        total_route[temp_route[0]] = temp_route[1:]
+        total_time += temp_time
         total_time += 1     # 换乘增加一分钟
-    print('Total time: ', total_time, 'min')
+        total_fee += temp_fee
+    return total_route, total_time, total_fee
+
+
+def get_other_route(lat1, long1, lat2, long2):
+    distance = geodesic((float(lat1), float(long1)), (float(lat2), float(long2))).m
+    taxi_time = distance / 1000
+    taxi_fee = 8     # 8r起步，超过3公里每公里2r
+    if distance > 3000:
+        taxi_fee += 2 * math.ceil((distance - 3000) / 1000)
+    walk_time = distance / 83
+    return taxi_time, taxi_fee, walk_time
 
 
 def get_near_station(station_manager, lat1, long1, lat2, long2):
@@ -243,9 +276,29 @@ def get_near_station(station_manager, lat1, long1, lat2, long2):
 if __name__ == '__main__':
     # 初始化站点和线路
     station_manager, line_manager = initiate_manager('../data/transportation.csv')
+    # line_manager.print_all_dis()
     # 找到离起点和终点最近的公交站
     # start = '35288'     # 海沧湾公园[地铁]
     # terminal = '34782'  # 湖滨东路[地铁]
-    start, terminal = get_near_station(station_manager, '24.454744', '118.116097', '24.43582', '118.116178') # 园博园到环岛路
+    s_lat = '24.454744'
+    s_long = '118.116097'
+    t_lat = '24.43582'
+    t_long = '118.116178'
+    start, terminal = get_near_station(station_manager, s_lat, s_long, t_lat, t_long) # 园博园到环岛路
     # 获取公共交通路线（含换乘）
-    get_bus_route(station_manager, line_manager, start, terminal)
+    bus_route, bus_time, bus_fee = get_bus_route(station_manager, line_manager, start, terminal)
+    print('---------- Bus Route ----------')
+    for key in bus_route:
+        print('From ', bus_route[key][0], ' take ', key, ' to ', bus_route[key][len(bus_route[key]) - 1])
+        for i in range(len(bus_route[key]) - 1):
+            print(bus_route[key][i], ' > ', end='')
+        print(bus_route[key][len(bus_route[key]) - 1])
+    print('Estimated total time: ', bus_time, 'min')
+    print('Estimated total fee: ', bus_fee, 'rmb')
+    # 获取打的和步行的路线
+    taxi_time, taxi_fee, walk_time = get_other_route(s_lat, s_long, t_lat, t_long)
+    print('---------- Taxi Route ----------')
+    print('Estimated total time: ', taxi_time, 'min')
+    print('Estimated total fee: ', taxi_fee, 'rmb')
+    print('---------- Walk Route ----------')
+    print('Estimated total time: ', walk_time, 'min')
