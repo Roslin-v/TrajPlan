@@ -206,7 +206,7 @@ def get_bus_route(station_manager, line_manager, start, terminal):
             v_matrix[i].append(line_manager.get_best_route(stations[i].station_id, stations[j].station_id, same_lines))
     start_index = station_index[start]
     terminal_index = station_index[terminal]
-    # ========== 使用Dijikstrea算法计算路径
+    # ========== 使用Dijkstra算法计算路径
     # 初始化dis数组
     for i in range(0, len(v_matrix) - 1):
         dis.append((v_matrix[start_index][i].stops, [v_matrix[start_index][i]]))
@@ -247,11 +247,12 @@ def get_bus_route(station_manager, line_manager, start, terminal):
 
 def get_other_route(lat1, long1, lat2, long2):
     distance = geodesic((float(lat1), float(long1)), (float(lat2), float(long2))).m
-    taxi_time = distance / 1000
-    taxi_fee = 8     # 8r起步，超过3公里每公里2r
+    distance *= 2
+    taxi_time = distance / 360
+    taxi_fee = 10     # 10r起步，超过3公里每公里2r
     if distance > 3000:
         taxi_fee += 2 * math.ceil((distance - 3000) / 1000)
-    walk_time = distance / 83
+    walk_time = distance / 80
     return taxi_time, taxi_fee, walk_time
 
 

@@ -136,18 +136,18 @@ def load_poi_features(path):
 def initiate_dict():
     spot_df = pd.read_csv('../data/spot.csv', encoding='ANSI')
     food_df = pd.read_csv('../data/food.csv', encoding='ANSI')
-    trans_df = pd.read_csv('../data/transportation.csv', encoding='ANSI')
+    # trans_df = pd.read_csv('../data/transportation.csv', encoding='ANSI')
     # 生成POI ID字典
     spot_ids = list(set(spot_df['id'].tolist()))
     food_ids = list(set(food_df['id'].tolist()))
-    trans_ids = list(set(spot_df['id'].tolist()))
-    poi_ids = spot_ids + food_ids + trans_ids
+    # trans_ids = list(set(trans_df['id'].tolist()))
+    poi_ids = spot_ids + food_ids
     poi_id_dict = dict(zip(poi_ids, range(len(poi_ids))))
     # 生成POI种类字典
     spot_ids = list(set(spot_df['category'].tolist()))
     food_ids = list(set(food_df['category_id'].tolist()))
-    trans_ids = list(set(spot_df['category'].tolist()))
-    cat_ids = spot_ids + food_ids + trans_ids
+    # trans_ids = list(set(trans_df['category'].tolist()))
+    cat_ids = spot_ids + food_ids
     cat_id_dict = dict(zip(cat_ids, range(len(cat_ids))))
     return poi_id_dict, cat_id_dict
 

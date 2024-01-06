@@ -1,3 +1,19 @@
+import torch.nn as nn
+
+
+class CategoryEmbeddings(nn.Module):
+    def __init__(self, num_cats, embedding_dim):
+        super(CategoryEmbeddings, self).__init__()
+        self.cat_embedding = nn.Embedding(
+            num_embeddings=num_cats,
+            embedding_dim=embedding_dim,
+        )
+
+    def forward(self, cat_idx):
+        embed = self.cat_embedding(cat_idx)
+        return embed
+
+
 # Trajectory Planning Network
 class TPN():
     def __init__(self):
