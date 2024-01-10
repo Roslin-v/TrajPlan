@@ -1,7 +1,8 @@
 from data_process import *
+from model import *
 
 
-def train(model, args):
+def train(args):
     # ========== 加载数据集
     print('----------Loading data----------')
     # ========== 数据预处理
@@ -17,5 +18,8 @@ def train(model, args):
     # Step 2: 生成字典
     poi_id_dict, cat_id_dict = initiate_dict()
     # Step 3: 上下文嵌入
+    # ========== 初始化模型
+    X = []
+    tpn = TPN(X, args)
     # ========== 利用时间差分法训练网络
     print('----------Training----------')
