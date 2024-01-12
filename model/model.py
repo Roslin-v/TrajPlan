@@ -129,36 +129,25 @@ class TPN(nn.Module):
         super(TPN, self).__init__()
         self.args = args
         # ========== 可观测成本g
-        # Step1: 根据交通网络图计算路线距离
-        self.dis_list = []
+
         # Step2: 使用GCN将POI嵌入到保留POI之间全局转换的潜在空间中
         self.poi_embed_model = GCN(ninput=self.args.gcn_nfeat, nhid=self.args.gcn_nhid, noutput=self.args.poi_embed_dim,
                               dropout=self.args.gcn_dropout)
         # Step3: 用转移注意图来模拟从一个POI到另一个POI的转移概率
         self.node_attn_model = NodeAttnMap(in_features=self.args.gcn_nfeat, nhid=self.args.node_attn_nhid, use_mask=False)
-        # Step4: 距离+转移概率计算可观测成本
-        self.fc1 = nn.Linear()
-        self.relu1 = nn.ReLU()
-        self.loss1 = nn.Softmax()
+
+        self.rnn = nn.RNN(self.args.poi_num * 2, self.args.hidden_size, batch_first=True)
+        self.fc = nn.Linear(self.args.hidden_size, self.args.poi_num)
         # ========== 估计成本h
         # Step1: 利用图神经网络估计到目的地的代价
         # Step2: 引入多头注意力机制
 
     def forward(self, X, A):
-        # Todo: 输入我是先随便写的。。记得改一下
-        # poi_embed = self.poi_embed_model(X)
-        # 计算两两之间的距离
-        for i in range(len(X)-1):
-            self.dis_list.append(geodesic(X[i], X[i+1]).m)
-        distance = torch.Tensor(self.dis_list).detach()  # detach函数抽离出来，反向传播不会更新它
-        node_attn = self.node_attn_model(X, A)
-        g = self.fc1(torch.cat((distance, node_attn), dim=2))
-        g = self.relu1(g)
-        g = self.loss1(g)
+        '''
+        combined_input = torch.cat((distance, probability), dim=1)
+        g, hidden = self.rnn(combined_input)
+        g = self.fc(g)
+        '''
+        g = self.node_attn_model(X, A)
+        g = nn.functional.softmax(g)
         return g
-
-
-# Improved A Star Algorithm using TPN
-class AStarPlus():
-    def __init__(self):
-        print('Finished A Star Algorithm.')

@@ -1,6 +1,9 @@
 import csv
+
+import numpy as np
 from geopy.distance import geodesic
 import math
+from data_process import *
 
 
 class Line:
@@ -274,7 +277,23 @@ def get_near_station(station_manager, lat1, long1, lat2, long2):
     return start, terminal
 
 
+# Improved A Star Algorithm using TPN
+def AStarPlus():
+    # ========== 构建可预测成本g
+    # 归一化处理
+    distance = load_distance('../data/distance.csv')
+    adj = load_graph_adj_mtx('../data/traj_graph_A.csv')
+    dis_min = distance.min()
+    k1 = 1000 / (distance.max() - dis_min)
+    dis_new = np.where(True, k1 * (distance - dis_min), distance)
+    adj_min = adj.min()
+    k2 = 1000 / (adj.max() - adj_min)
+    adj_new = np.where(adj > 0, 1000 - k2 * (adj - adj_min), 9999)    # 概率越小，代价越大，对角线是自己，转移的概率无限大
+    g = 0.6 * dis_new + 0.4 * adj_new
+
+
 if __name__ == '__main__':
+    '''
     # 初始化站点和线路
     station_manager, line_manager = initiate_manager('../data/transportation.csv')
     # line_manager.print_all_dis()
@@ -303,3 +322,5 @@ if __name__ == '__main__':
     print('Estimated total fee: ', taxi_fee, 'rmb')
     print('---------- Walk Route ----------')
     print('Estimated total time: ', walk_time, 'min')
+    '''
+    AStarPlus()
