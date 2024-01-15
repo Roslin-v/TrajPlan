@@ -11,6 +11,7 @@ if __name__ == '__main__':
     parser.add_argument('--gcn-nhid', type=list, default=[32, 64], help='List of hidden dims for gcn layers')
     parser.add_argument('--node-attn-nhid', type=int, default=128, help='Node attn map hidden dimensions')
     parser.add_argument('--hidden-size', type=int, default=128, help='RNN hidden dimensions')
+    parser.add_argument('--num-heads', type=int, default=6, help='RNN hidden dimensions')
     parser.add_argument('--cat-embed-dim', type=int, default=32, help='Category embedding dimensions')
     parser.add_argument('--lr', type=float, default=0.001, help='Initial learning rate.')
     parser.add_argument('--weight_decay', type=float, default=5e-4, help='Weight decay (L2 loss on parameters).')

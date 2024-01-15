@@ -123,6 +123,68 @@ class NodeAttnMap(nn.Module):
         return self.leakyrelu(e)
 
 
+# 多头注意力机制
+class MultiHeadedAttention(nn.Module):
+    def __init__(self, args):
+        super().__init__()
+        assert args.hidden_size % args.num_heads == 0
+        # We assume d_v always equals d_k
+        self.d_k = args.hidden_size // args.num_heads
+        self.num_heads = args.num_heads
+        self.device = torch.device('cpu')
+        # self.add_cls = args.add_cls
+        self.scale = self.d_k ** -0.5  # 1/sqrt(dk)
+        self.temporal_bias_dim = 64
+        self.linear_layers = nn.ModuleList([nn.Linear(args.hidden_size, args.hidden_size) for _ in range(3)])
+        self.dropout = nn.Dropout(p=0)
+        self.proj = nn.Linear(args.hidden_size, args.hidden_size)
+        self.proj_drop = nn.Dropout(0)
+        if self.temporal_bias_dim != 0 and self.temporal_bias_dim != -1:
+            self.temporal_mat_bias_1 = nn.Linear(1, self.temporal_bias_dim, bias=True)
+            self.temporal_mat_bias_2 = nn.Linear(self.temporal_bias_dim, 1, bias=True)
+        elif self.temporal_bias_dim == -1:
+            self.temporal_mat_bias = nn.Parameter(torch.Tensor(1, 1))
+            nn.init.xavier_uniform_(self.temporal_mat_bias)
+
+    def forward(self, x, padding_masks, future_mask=True, output_attentions=False, batch_temporal_mat=None):
+        batch_size, seq_len, d_model = x.shape
+        # 1) Do all the linear projections in batch from d_model => h x d_k
+        # l(x) --> (B, T, d_model)
+        # l(x).view() --> (B, T, head, d_k)
+        query, key, value = [l(x).view(batch_size, -1, self.num_heads, self.d_k).transpose(1, 2)
+                             for l, x in zip(self.linear_layers, (x, x, x))]
+        # q, k, v --> (B, head, T, d_k)
+        # 2) Apply attention on all the projected vectors in batch.
+        scores = torch.matmul(query, key.transpose(-2, -1)) * self.scale  # (B, head, T, T)
+        batch_temporal_mat = 1.0 / torch.log(torch.exp(torch.tensor(1.0).to(self.device)) + batch_temporal_mat)
+        if self.temporal_bias_dim != 0 and self.temporal_bias_dim != -1:
+            batch_temporal_mat = self.temporal_mat_bias_2(nn.functional.leaky_relu(
+                self.temporal_mat_bias_1(batch_temporal_mat.unsqueeze(-1)),
+                negative_slope=0.2)).squeeze(-1)  # (B, T, T)
+        if self.temporal_bias_dim == -1:
+            batch_temporal_mat = batch_temporal_mat * self.temporal_mat_bias.expand((1, seq_len, seq_len))
+        batch_temporal_mat = batch_temporal_mat.unsqueeze(1)  # (B, 1, T, T)
+        scores += batch_temporal_mat  # (B, 1, T, T)
+        if padding_masks is not None:
+            scores.masked_fill_(padding_masks == 0, float('-inf'))
+        if future_mask:
+            mask_postion = torch.triu(torch.ones((1, seq_len, seq_len)), diagonal=1).bool().to(self.device)
+            if self.add_cls:
+                mask_postion[:, 0, :] = 0
+            scores.masked_fill_(mask_postion, float('-inf'))
+        p_attn = nn.functional.softmax(scores, dim=-1)  # (B, head, T, T)
+        p_attn = self.dropout(p_attn)
+        out = torch.matmul(p_attn, value)  # (B, head, T, d_k)
+        # 3) "Concat" using a view and apply a final linear.
+        out = out.transpose(1, 2).contiguous().view(batch_size, -1, self.num_heads * self.d_k)  # (B, T, d_model)
+        out = self.proj(out)  # (B, T, N, D)
+        out = self.proj_drop(out)
+        if output_attentions:
+            return out, p_attn  # (B, T, dim_out), (B, head, T, T)
+        else:
+            return out, None  # (B, T, dim_out)
+
+
 # Trajectory Planning Network
 class TPN(nn.Module):
     def __init__(self, args):
