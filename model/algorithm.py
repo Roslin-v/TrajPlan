@@ -1,4 +1,6 @@
 import csv
+
+import numpy as np
 from geopy.distance import geodesic
 import math
 from data_process import *
@@ -257,22 +259,16 @@ def get_other_route(lat1, long1, lat2, long2):
     return taxi_time, taxi_fee, walk_time
 
 
-def get_near_station(station_manager, lat1, long1, lat2, long2):
-    start = ''
-    terminal = ''
-    min_start = 9999
-    min_terminal = 9999
+def get_near_station(station_manager, lat1, long1):
+    near = ''
+    min_dis = 9999
     for key in station_manager.stations:
         each = station_manager.stations[key]
-        dis_start = geodesic((float(lat1), float(long1)), (float(each.latitude), float(each.longitude))).m
-        if min_start > dis_start:
-            min_start = dis_start
-            start = each.station_id
-        dis_terminal = geodesic((float(lat2), float(long2)), (float(each.latitude), float(each.longitude))).m
-        if min_terminal > dis_terminal:
-            min_terminal = dis_terminal
-            terminal = each.station_id
-    return start, terminal
+        cur_dis = geodesic((float(lat1), float(long1)), (float(each.latitude), float(each.longitude))).m
+        if min_dis > cur_dis:
+            min_dis = cur_dis
+            near = each.station_id
+    return near
 
 
 def cal_attraction():
@@ -342,20 +338,47 @@ def cal_attraction():
     return attraction
 
 
+def cal_heuristics():
+    spots = load_poi_features('../data/spot.csv')
+    heuristics = np.zeros((spots.shape[0], spots.shape[0]))
+    near = np.loadtxt('../data/near_station.csv', delimiter=',')
+    near_stations = list(near[:, 0])
+    for i in range(len(near_stations)):
+        near_stations[i] = str(int(near_stations[i]))
+    near_time = list(near[:, 1])
+    G = build_trans_graph()
+    np.savetxt(os.path.join('../data/trans_graph_A.csv'), nx.adjacency_matrix(G, nodelist=G.nodes()).todense(), delimiter=',')
+    for i in range(spots.shape[0]):
+        for j in range(i+1, spots.shape[0]):
+            heuristics[i][j] += near_time[i]
+            heuristics[i][j] += near_time[j]
+            try:
+                heuristics[i][j] += nx.dijkstra_path_length(G, int(near_stations[i]), int(near_stations[j])) / 500
+            except:     # 找不到路径时
+                heuristics[i][j] += geodesic((spots[i][6], spots[i][7]), (spots[j][6], spots[j][7])).m / 40
+            heuristics[j][i] = heuristics[i][j]
+    np.savetxt('../data/heuristics.csv', heuristics, delimiter=',')
+    return heuristics
+
+
 # Improved A Star Algorithm using TPN
 def AStarPlus():
     # ========== 构建可预测成本g
     distance = load_distance('../data/distance.csv')
-    attraction = load_attraction('../data/attraction.csv')
+    attraction = load_matrix('../data/attraction.csv')
     # 归一化处理
     dis_min = distance.min()
     k1 = 10 / (distance.max() - dis_min)
     dis_new = np.where(True, k1 * (distance - dis_min), distance)
     attract_min = attraction.min()
     k2 = 10 / (attraction.max() - attract_min)
-    attract_new = np.where(attraction > 0, 10 - k2 * (attraction - attract_min), 50)    # 吸引力越小，代价越大，对角线是自己，转移的概率无限大
+    attract_new = np.where(attraction > 0, 10 - k2 * (attraction - attract_min), attraction)    # 吸引力越小，代价越大
     g = 0.6 * dis_new + 0.4 * attract_new
-    print(g)
+    # ========== 构建估计成本h
+    route = load_matrix('../data/heuristics.csv')
+    route_min = route.min()
+    k3 = 10 / (route.max() - route_min)
+    h = np.where(route > 0, k3 * (route - route_min), route)
 
 
 if __name__ == '__main__':
@@ -370,7 +393,8 @@ if __name__ == '__main__':
     s_long = '118.116097'
     t_lat = '24.43582'
     t_long = '118.116178'
-    start, terminal = get_near_station(station_manager, s_lat, s_long, t_lat, t_long) # 园博园到环岛路
+    start = get_near_station(station_manager, s_lat, s_long) # 园博园到环岛路
+    terminal = get_near_station(station_manager, t_lat, t_long)
     # 获取公共交通路线（含换乘）
     bus_route, bus_time, bus_fee = get_bus_route(station_manager, line_manager, start, terminal)
     print('---------- Bus Route ----------')

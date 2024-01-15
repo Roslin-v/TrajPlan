@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from scipy.sparse.linalg import eigsh
+from geopy.distance import geodesic
 
 
 # 构造轨迹图
@@ -37,7 +38,7 @@ def build_traj_graph():
             poi_id = row['poi']
             traj_id = row['seq']
             # 轨迹的第一个节点以及不同的轨迹的结束和开始之间没有边
-            if (previous_poi_id == 0) or (previous_traj_id != traj_id):
+            if (previous_poi_id == 0) or ((previous_traj_id+1) != traj_id):
                 user_visit[user_id].append(poi_id)
                 spot_visit[poi_id].append(user_id)
                 previous_poi_id = poi_id
@@ -58,8 +59,9 @@ def build_traj_graph():
 
 
 # 构造交通网络图
-def build_trans_graph(df):
+def build_trans_graph():
     G = nx.DiGraph()
+    df = pd.read_csv(os.path.join('../data/transportation.csv'), encoding='ANSI')
     trans = list(set(df['trans_id'].to_list()))
     loop = tqdm(trans)
     for tran_id in loop:
@@ -80,18 +82,17 @@ def build_trans_graph(df):
         previous_trans_id = 0
         for i, row in tran_df.iterrows():
             poi_id = row['id']
-            traj_id = row['seq']
+            trans_id = row['seq']
             # 轨迹的第一个节点以及不同的轨迹的结束和开始之间没有边
-            if (previous_poi_id == 0) or (previous_trans_id != traj_id):
+            if (previous_poi_id == 0) or ((previous_trans_id+1) != trans_id):
                 previous_poi_id = poi_id
-                previous_trans_id = traj_id
+                previous_trans_id = trans_id
                 continue
-            # 添加有向边
-            if G.has_edge(previous_poi_id, poi_id):
-                G.edges[previous_poi_id, poi_id]['weight'] += 1
-            else:
-                G.add_edge(previous_poi_id, poi_id, weight=1)
-            previous_trans_id = traj_id
+            # 添加有向边，权重是距离
+            if not G.has_edge(previous_poi_id, poi_id):
+                w = geodesic((float(G.nodes[previous_poi_id]['latitude']), float(G.nodes[previous_poi_id]['longitude'])), (float(G.nodes[poi_id]['latitude']), float(G.nodes[poi_id]['longitude']))).m
+                G.add_edge(previous_poi_id, poi_id, weight=w)
+            previous_trans_id = trans_id
             previous_poi_id = poi_id
     return G
 
@@ -135,8 +136,8 @@ def trans2csv(G):
             print(f'{node_name},{checkin_cnt}, {name}, {latitude}, {longitude}', file=f)
 
 
-# 加载路线吸引力
-def load_attraction(path):
+# 加载转移矩阵
+def load_matrix(path):
     # A是(num, num)的矩阵，内容是路线吸引力
     A = np.loadtxt(path, delimiter=',')
     return A
