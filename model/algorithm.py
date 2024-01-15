@@ -1,6 +1,4 @@
 import csv
-
-import numpy as np
 from geopy.distance import geodesic
 import math
 from data_process import *
@@ -277,19 +275,87 @@ def get_near_station(station_manager, lat1, long1, lat2, long2):
     return start, terminal
 
 
+def cal_attraction():
+    G, user_visit, spot_visit = build_traj_graph()
+    user_value = {}     # 用户的经验值=访问过的景点的兴趣值之和
+    last_user_value = {}
+    spot_value = {}     # 景点的兴趣值=被访问过的用户经验值之和
+    last_spot_value = {}
+    # 随机初始化
+    for key in user_visit:
+        last_user_value[key] = user_value[key] = 1
+    for key in spot_visit:
+        last_spot_value[key] = spot_value[key] = 1
+    while True:
+        for key in spot_visit:
+            users = spot_visit[key]
+            spot_value[key] = 0
+            for each in users:
+                spot_value[key] += last_user_value[each]
+        # 除以最大值将其标准化
+        spot_value_max = max(list(spot_value.values()))
+        for key in spot_value:
+            spot_value[key] /= spot_value_max
+        for key in user_visit:
+            spots = user_visit[key]
+            user_value[key] = 0
+            for each in spots:
+                user_value[key] += last_spot_value[each]
+        user_value_max = max(list(user_value.values()))
+        for key in user_value:
+            user_value[key] /= user_value_max
+        # 结果收敛时结束算法
+        user_diff = []
+        spot_diff = []
+        for key in user_visit:
+            user_diff.append(abs(user_value[key]-last_user_value[key]))
+        for key in spot_visit:
+            spot_diff.append(abs(spot_value[key]-last_spot_value[key]))
+        diff = sum(user_diff) + sum(spot_diff)
+        if diff < 0.01:
+            break
+        else:
+            for key in user_visit:
+                last_user_value[key] = user_value[key]
+            for key in spot_visit:
+                last_spot_value[key] = spot_value[key]
+    spot_id = list(spot_value.keys())
+    attraction = np.zeros((len(spot_id), len(spot_id)))
+    adj = np.array(nx.adjacency_matrix(G, nodelist=G.nodes()).todense())
+    row_sum = np.sum(adj, axis=1)
+    col_sum = np.sum(adj, axis=0)
+    for i in range(len(spot_id)):
+        for j in range(len(spot_id)):
+            if i == j:
+                continue
+            if row_sum[i] == 0 or col_sum[j] == 0:
+                attraction[i][j] = 0
+                continue
+            user_sum = 0
+            users = spot_visit[spot_id[i]]
+            for each in users:
+                if [spot_id[i], spot_id[j]] in user_visit[each]:
+                    user_sum += user_value[each]
+            # A→B的吸引力=A→B的次数/A的总出度*A的兴趣值+A→B的次数/B的总入度*B的兴趣值+访问过该顺序的用户经验值之和
+            attraction[i][j] = adj[i][j] / row_sum[i] * spot_value[spot_id[i]] + adj[i][j] / col_sum[j] * spot_value[spot_id[j]] + user_sum
+    np.savetxt('../data/attraction.csv', attraction, delimiter=',')
+    return attraction
+
+
 # Improved A Star Algorithm using TPN
 def AStarPlus():
     # ========== 构建可预测成本g
-    # 归一化处理
     distance = load_distance('../data/distance.csv')
-    adj = load_graph_adj_mtx('../data/traj_graph_A.csv')
+    attraction = load_attraction('../data/attraction.csv')
+    # 归一化处理
     dis_min = distance.min()
-    k1 = 1000 / (distance.max() - dis_min)
+    k1 = 10 / (distance.max() - dis_min)
     dis_new = np.where(True, k1 * (distance - dis_min), distance)
-    adj_min = adj.min()
-    k2 = 1000 / (adj.max() - adj_min)
-    adj_new = np.where(adj > 0, 1000 - k2 * (adj - adj_min), 9999)    # 概率越小，代价越大，对角线是自己，转移的概率无限大
-    g = 0.6 * dis_new + 0.4 * adj_new
+    attract_min = attraction.min()
+    k2 = 10 / (attraction.max() - attract_min)
+    attract_new = np.where(attraction > 0, 10 - k2 * (attraction - attract_min), 50)    # 吸引力越小，代价越大，对角线是自己，转移的概率无限大
+    g = 0.6 * dis_new + 0.4 * attract_new
+    print(g)
 
 
 if __name__ == '__main__':
@@ -323,4 +389,5 @@ if __name__ == '__main__':
     print('---------- Walk Route ----------')
     print('Estimated total time: ', walk_time, 'min')
     '''
+    # cal_attraction()
     AStarPlus()

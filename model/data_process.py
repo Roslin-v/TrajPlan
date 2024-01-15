@@ -7,22 +7,29 @@ from scipy.sparse.linalg import eigsh
 
 
 # 构造轨迹图
-def build_traj_graph(df):
+def build_traj_graph():
     G = nx.DiGraph()
+    user_visit = {}  # 每个用户访问过哪些景点
+    spot_visit = {}  # 每个景点被哪些用户访问
     # 把所有的POI都加到有向图中
     spot_df = pd.read_csv(os.path.join('../data/spot.csv'), encoding='ANSI')
     for row in spot_df.iterrows():
         G.add_node(row[1][0], checkin_cnt=1)
+        spot_visit[row[1][0]] = []
     # 添加全连接的边
+    '''
     all_pois = list(set(spot_df['id'].to_list()))
     for i in range(len(all_pois)):
         for j in range(i + 1, len(all_pois)):
             G.add_edge(all_pois[i], all_pois[j], weight=1)
             G.add_edge(all_pois[j], all_pois[i], weight=1)
+    '''
+    df = pd.read_csv(os.path.join('../data/traj.csv'))
     users = list(set(df['user'].to_list()))
     loop = tqdm(users)
     for user_id in loop:
         user_df = df[df['user'] == user_id]
+        user_visit[user_id] = []
         # 对于每一条轨迹，按照签到顺序，添加有向边
         previous_poi_id = 0
         previous_traj_id = 0
@@ -31,16 +38,23 @@ def build_traj_graph(df):
             traj_id = row['seq']
             # 轨迹的第一个节点以及不同的轨迹的结束和开始之间没有边
             if (previous_poi_id == 0) or (previous_traj_id != traj_id):
+                user_visit[user_id].append(poi_id)
+                spot_visit[poi_id].append(user_id)
                 previous_poi_id = poi_id
                 previous_traj_id = traj_id
                 continue
             if previous_poi_id == poi_id:
                 continue
             # 添加有向边
-            G.edges[previous_poi_id, poi_id]['weight'] += 1
+            if G.has_edge(previous_poi_id, poi_id):
+                G.edges[previous_poi_id, poi_id]['weight'] += 1
+            else:
+                G.add_edge(previous_poi_id, poi_id, weight=1)
+            user_visit[user_id].append(poi_id)
+            spot_visit[poi_id].append(user_id)
             previous_traj_id = traj_id
             previous_poi_id = poi_id
-    return G
+    return G, user_visit, spot_visit
 
 
 # 构造交通网络图
@@ -121,14 +135,10 @@ def trans2csv(G):
             print(f'{node_name},{checkin_cnt}, {name}, {latitude}, {longitude}', file=f)
 
 
-# 加载POI轨迹邻接矩阵
-def load_graph_adj_mtx(path):
-    # A是(num, num)的矩阵，内容是weight转移概率
+# 加载路线吸引力
+def load_attraction(path):
+    # A是(num, num)的矩阵，内容是路线吸引力
     A = np.loadtxt(path, delimiter=',')
-    sum = np.sum(A, axis=1)
-    for i in range(A.shape[0]):
-        for j in range(A.shape[1]):
-            A[i][j] /= sum[i]
     return A
 
 
@@ -193,9 +203,8 @@ def calculate_laplacian_matrix(adj_mat, mat_type):
 
 
 if __name__ == '__main__':
-    traj_df = pd.read_csv(os.path.join('../data/traj.csv'))
     print('----------Building trajectory graph ----------')
-    G = build_traj_graph(traj_df)
+    G, _, _ = build_traj_graph()
     traj2csv(G)
     '''
     trans_df = pd.read_csv(os.path.join('../data/transportation.csv'), encoding='ANSI')
