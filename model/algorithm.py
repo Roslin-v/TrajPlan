@@ -361,24 +361,121 @@ def cal_heuristics():
     return heuristics
 
 
-# Improved A Star Algorithm using TPN
-def AStarPlus():
-    # ========== 构建可预测成本g
-    distance = load_distance('../data/distance.csv')
+def get_cost():
+    distance = load_matrix('../data/heuristics.csv')
     attraction = load_matrix('../data/attraction.csv')
     # 归一化处理
     dis_min = distance.min()
-    k1 = 10 / (distance.max() - dis_min)
-    dis_new = np.where(True, k1 * (distance - dis_min), distance)
+    k1 = 20 / (distance.max() - dis_min)
+    dis_new = np.where(distance > 0, k1 * (distance - dis_min), distance)
     attract_min = attraction.min()
-    k2 = 10 / (attraction.max() - attract_min)
-    attract_new = np.where(attraction > 0, 10 - k2 * (attraction - attract_min), attraction)    # 吸引力越小，代价越大
-    g = 0.6 * dis_new + 0.4 * attract_new
-    # ========== 构建估计成本h
-    route = load_matrix('../data/heuristics.csv')
-    route_min = route.min()
-    k3 = 10 / (route.max() - route_min)
-    h = np.where(route > 0, k3 * (route - route_min), route)
+    k2 = 20 / (attraction.max() - attract_min)
+    attract_new = np.where(attraction > 0, 20 - k2 * (attraction - attract_min), 100)  # 吸引力越小，代价越大
+    cost = 0.6 * dis_new + 0.4 * attract_new
+    for i in range(cost.shape[0]):  # 对角线（自己）的转移概率无限大
+        cost[i][i] = 99
+    return cost
+
+
+def ant_colony(all_cost, nodes):
+    nodes.append(10000)      # 增加一个虚拟点
+    node_count = len(nodes)  # 节点数量
+    # POI ID转为索引
+    for i in range(node_count):
+        nodes[i] %= 10000
+        nodes[i] -= 1
+    # 构建转移代价矩阵
+    cost = np.zeros((node_count, node_count))
+    for i in range(node_count - 1):
+        for j in range(node_count - 1):
+            cost[i][j] = all_cost[nodes[i]][nodes[j]]
+    # 虚拟点和其他点的转移代价都为0，但是由于后续要用到cost的倒数，将其设置为一个很小的值
+    for i in range(node_count):
+        cost[node_count-1][i] = 0.001
+        cost[i][node_count-1] = 0.001
+    # ========== 设置参数
+    ant_count = 50              # 蚂蚁数量
+    alpha = 1                   # 信息素重要程度因子
+    beta = 2                    # 启发函数重要程度因子
+    rho = 0.1                   # 挥发速度
+    iter = 0                    # 迭代初始值
+    max_iter = 200              # 最大迭代值
+    Q = 1
+    pheromone = np.ones((node_count, node_count))   # 初始信息素矩阵，全是为1组成的矩阵
+    candidate = np.zeros((ant_count, node_count)).astype(int)   # 候选集列表，存放蚂蚁的路径
+    path_best = np.zeros((max_iter, node_count))    # 每次迭代后的最优路径
+    cost_best = np.zeros(max_iter)              # 存放每次迭代的最优距离
+    etable = 1.0 / cost         # 倒数矩阵
+    # ======== 开始迭代
+    while iter < max_iter:
+        # Step1: 蚂蚁初始点选择
+        if ant_count <= node_count:
+            candidate[:, 0] = np.random.permutation(range(node_count))[:ant_count]
+        else:
+            m = ant_count - node_count
+            n = 2
+            candidate[:node_count, 0] = np.random.permutation(range(node_count))[:]
+            while m > node_count:
+                candidate[node_count * (n - 1):node_count * n, 0] = np.random.permutation(range(node_count))[:]
+                m = m - node_count
+                n = n + 1
+            candidate[node_count * (n - 1):ant_count, 0] = np.random.permutation(range(node_count))[:m]
+        length = np.zeros(ant_count)  # 每次迭代的N个蚂蚁的距离值
+        # Step2: 选择下一个节点
+        for i in range(ant_count):
+            # 移除已经访问的第一个元素
+            un_visit = list(range(node_count))  # 列表形式存储没有访问的节点编号
+            visit = candidate[i, 0]             # 当前所在点,第i个蚂蚁在第一个节点
+            un_visit.remove(visit)              # 在未访问的节点中移除当前开始的点
+            for j in range(1, node_count):      # 访问剩下的节点
+                trans_prob = np.zeros(len(un_visit))  # 每次循环都更改当前没有访问的节点的转移概率矩阵
+                # 下一节点的概率函数
+                for k in range(len(un_visit)):
+                    # 计算当前节点到剩余节点的（信息素浓度^alpha）*（节点适应度的倒数）^beta
+                    trans_prob[k] = np.power(pheromone[visit][un_visit[k]], alpha) * np.power(etable[visit][un_visit[k]], beta)
+                # 累计概率，轮盘赌选择
+                total_prob = (trans_prob / sum(trans_prob)).cumsum()
+                total_prob -= np.random.rand()
+                # 求出离随机数产生最近的索引值
+                k = un_visit[list(total_prob > 0).index(True)]
+                # 下一个访问节点的索引值
+                candidate[i, j] = k
+                un_visit.remove(k)
+                length[i] += cost[visit][k]
+                visit = k  # 更改出发点，继续选择下一个到达点
+            length[i] += cost[visit][candidate[i, 0]]  # 最后一个节点和第一个节点的距离值也要加进去
+        # Step3: 更新路径
+        # 如果迭代次数为一次，那么无条件让初始值代替path_best,cost_best.
+        if iter == 0:
+            cost_best[iter] = length.min()
+            path_best[iter] = candidate[length.argmin()].copy()
+        else:
+            # 如果当前的解没有之前的解好，那么当前最优还是为之前的那个值；并且用前一个路径替换为当前的最优路径
+            if length.min() > cost_best[iter - 1]:
+                cost_best[iter] = cost_best[iter - 1]
+                path_best[iter] = path_best[iter - 1].copy()
+            else:  # 当前解比之前的要好，替换当前解和路径
+                cost_best[iter] = length.min()
+                path_best[iter] = candidate[length.argmin()].copy()
+        # Step 4: 更新信息素
+        pheromone_change = np.zeros((node_count, node_count))
+        for i in range(ant_count):
+            for j in range(node_count - 1):
+                # 当前路径之间的信息素的增量：1/当前蚂蚁行走的总距离的信息素
+                pheromone_change[candidate[i, j]][candidate[i][j + 1]] += Q / length[i]
+            # 最后一个节点和第一个节点的信息素增加量
+            pheromone_change[candidate[i, j + 1]][candidate[i, 0]] += Q / length[i]
+        pheromone = (1 - rho) * pheromone + pheromone_change
+        iter += 1
+    route = []
+    for each in path_best[-1]:
+        route.append(int(each))
+    for i in range(len(route)):
+        route[i] = nodes[route[i]] + 10001
+    route.remove(10000)
+    print('route: ', route)
+    print('cost: ', cost_best[-1])
+    return route
 
 
 if __name__ == '__main__':
@@ -414,4 +511,7 @@ if __name__ == '__main__':
     print('Estimated total time: ', walk_time, 'min')
     '''
     # cal_attraction()
-    AStarPlus()
+    # 1鼓浪屿，3园林植物园，5日光岩，6环岛路，7曾厝垵，8海底世界，9中山路，36海湾公园，122厦大
+    # 1-5-8-9-6-7-122-3-36
+    cost = get_cost()
+    ant_colony(cost, [10001, 10003, 10005, 10006, 10007, 10008, 10009, 10036, 10122])
