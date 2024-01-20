@@ -384,11 +384,14 @@ def ant_colony(all_cost, nodes):
     for i in range(node_count):
         nodes[i] %= 10000
         nodes[i] -= 1
+    he = load_matrix('../data/heuristics.csv')
+    trans_time = np.zeros((node_count-1, node_count-1))
     # 构建转移代价矩阵
     cost = np.zeros((node_count, node_count))
     for i in range(node_count - 1):
         for j in range(node_count - 1):
             cost[i][j] = all_cost[nodes[i]][nodes[j]]
+            trans_time[i][j] = round(he[nodes[i]][nodes[j]] / 60 * 2) / 2
     # 虚拟点和其他点的转移代价都为0，但是由于后续要用到cost的倒数，将其设置为一个很小的值
     for i in range(node_count):
         cost[node_count-1][i] = 0.001
@@ -408,18 +411,8 @@ def ant_colony(all_cost, nodes):
     etable = 1.0 / cost         # 倒数矩阵
     # ======== 开始迭代
     while iter < max_iter:
-        # Step1: 蚂蚁初始点选择
-        if ant_count <= node_count:
-            candidate[:, 0] = np.random.permutation(range(node_count))[:ant_count]
-        else:
-            m = ant_count - node_count
-            n = 2
-            candidate[:node_count, 0] = np.random.permutation(range(node_count))[:]
-            while m > node_count:
-                candidate[node_count * (n - 1):node_count * n, 0] = np.random.permutation(range(node_count))[:]
-                m = m - node_count
-                n = n + 1
-            candidate[node_count * (n - 1):ant_count, 0] = np.random.permutation(range(node_count))[:m]
+        # Step1: 蚂蚁初始点选择（虚拟点）
+        candidate[:, 0] = node_count - 1
         length = np.zeros(ant_count)  # 每次迭代的N个蚂蚁的距离值
         # Step2: 选择下一个节点
         for i in range(ant_count):
@@ -468,14 +461,67 @@ def ant_colony(all_cost, nodes):
         pheromone = (1 - rho) * pheromone + pheromone_change
         iter += 1
     route = []
-    for each in path_best[-1]:
-        route.append(int(each))
+    for i in range(1, len(path_best[-1])):
+        route.append(int(path_best[-1][i]))
+    X = load_poi_features('../data/spot.csv')
+    spots = []
+    for i in range(node_count - 1):
+        spots.append(X[nodes[i]])
+    belong = {}
     for i in range(len(route)):
-        route[i] = nodes[route[i]] + 10001
-    route.remove(10000)
-    print('route: ', route)
-    print('cost: ', cost_best[-1])
-    return route
+        try:
+            index = route.index(spots[route[i]][10] % 10000 - 1)
+        except:
+            continue
+        if index in belong:
+            belong[index].append(i)
+        else:
+            belong[index] = [i]
+    # 把最大的地区换到最前面
+    for key in belong:
+        b = max(belong[key])
+        if key > b:
+            route[key], route[b] = route[b], route[key]
+            belong[b] = belong[key]
+            del belong[key]
+    cur_day = 1
+    cur_time = 9
+    plan = {}   # {day1: id, name, start_time, end_time}
+    plan_fee = 0
+    i = 0
+    # 切分天数
+    while i != len(route):
+        end_time = cur_time + spots[route[i]][8]
+        if (end_time > 17 and spots[route[i]][9] == 0) or end_time > 21:
+            cur_day += 1
+            cur_time = 9
+            end_time = cur_time + spots[route[i]][8]
+        if cur_day not in plan:
+            plan[cur_day] = []
+        plan[cur_day].append([route[i] + 10001, spots[route[i]][1], cur_time, end_time])
+        plan_fee += spots[route[i]][5]
+        if i in belong:
+            for j in range(len(belong[i])):
+                temp_time = cur_time + spots[route[belong[i][j]]][8]
+                plan[cur_day].append([route[belong[i][j]] + 10001, spots[route[belong[i][j]]][1], cur_time, temp_time])
+                cur_time = temp_time
+                plan_fee += spots[route[belong[i][j]]][5]
+            if j != (len(belong[i]) - 1):
+                cur_time += trans_time[belong[i][j]][belong[i][j+1]]
+            i = max(belong[i])
+        cur_time = end_time
+        if i != (len(route) - 1):
+            cur_time += trans_time[route[i]][route[i+1]]
+        i += 1
+    plan_time = (len(plan) - 1) * 24 + list(plan.items())[-1][1][-1][-1]
+    for key in plan:
+        print('Day', key)
+        p = plan[key]
+        for each in p:
+            print(each[1], ':', each[2], '-', each[3])
+    print('Total time:', plan_time)
+    print('Total fee:', plan_fee)
+    return plan, plan_time, plan_fee
 
 
 if __name__ == '__main__':
@@ -514,4 +560,4 @@ if __name__ == '__main__':
     # 1鼓浪屿，3园林植物园，5日光岩，6环岛路，7曾厝垵，8海底世界，9中山路，36海湾公园，122厦大
     # 1-5-8-9-6-7-122-3-36
     cost = get_cost()
-    ant_colony(cost, [10001, 10003, 10005, 10006, 10007, 10008, 10009, 10036, 10122])
+    plan, total_time, total_fee = ant_colony(cost, [10001, 10003, 10005, 10006, 10007, 10008, 10009, 10036, 10122])
