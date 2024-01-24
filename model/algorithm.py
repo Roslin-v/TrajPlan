@@ -524,6 +524,22 @@ def ant_colony(all_cost, nodes):
     return plan, plan_time, plan_fee
 
 
+# 根据POI种类丰富度和行程时间安排评估行程分数
+def evaluate(plan):
+    X = load_poi_features('../data/spot.csv')
+    cat = set()
+    play_time = 0
+    plan_time = (len(plan) - 1) * 12 + list(plan.items())[-1][1][-1][-1]
+    for key in plan:
+        p = plan[key]
+        for each in p:
+            cat.add(X[each[0]-10001][2])
+            play_time += (each[3] - each[2])
+    score = 0.5 * len(cat) / 6 + 0.5 * play_time / plan_time
+    print(score)
+    return score
+
+
 if __name__ == '__main__':
     '''
     # 初始化站点和线路
@@ -561,3 +577,4 @@ if __name__ == '__main__':
     # 1-5-8-9-6-7-122-3-36
     cost = get_cost()
     plan, total_time, total_fee = ant_colony(cost, [10001, 10003, 10005, 10006, 10007, 10008, 10009, 10036, 10122])
+    score = evaluate(plan)
