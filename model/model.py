@@ -1,7 +1,21 @@
 import torch
 import torch.nn as nn
 import math
-from geopy.distance import geodesic
+
+
+class UserEmbeddings(nn.Module):
+    def __init__(self, num_users, embedding_dim):
+        super(UserEmbeddings, self).__init__()
+
+        self.user_embedding = nn.Embedding(
+            num_embeddings=num_users,
+            embedding_dim=embedding_dim,
+        )
+
+    def forward(self, user_idx):
+        # 将用户索引转换成对应的嵌入向量
+        embed = self.user_embedding(user_idx)
+        return embed
 
 
 class CategoryEmbeddings(nn.Module):
@@ -15,6 +29,19 @@ class CategoryEmbeddings(nn.Module):
     def forward(self, cat_idx):
         embed = self.cat_embedding(cat_idx)
         return embed
+
+
+class FuseEmbeddings(nn.Module):
+    def __init__(self, user_embed_dim, poi_embed_dim):
+        super(FuseEmbeddings, self).__init__()
+        embed_dim = user_embed_dim + poi_embed_dim
+        self.fuse_embed = nn.Linear(embed_dim, embed_dim)
+        self.leaky_relu = nn.LeakyReLU(0.2)
+
+    def forward(self, user_embed, poi_embed):
+        x = self.fuse_embed(torch.cat((user_embed, poi_embed), 0))
+        x = self.leaky_relu(x)
+        return x
 
 
 class GraphConvolution(nn.Module):
@@ -185,31 +212,65 @@ class MultiHeadedAttention(nn.Module):
             return out, None  # (B, T, dim_out)
 
 
-# Trajectory Planning Network
-class TPN(nn.Module):
-    def __init__(self, args):
-        super(TPN, self).__init__()
-        self.args = args
-        # ========== 可观测成本g
+class PositionalEncoding(nn.Module):
+    def __init__(self, d_model, dropout=0.1, max_len=500):
+        super(PositionalEncoding, self).__init__()
+        self.dropout = nn.Dropout(p=dropout)
 
-        # Step2: 使用GCN将POI嵌入到保留POI之间全局转换的潜在空间中
-        self.poi_embed_model = GCN(ninput=self.args.gcn_nfeat, nhid=self.args.gcn_nhid, noutput=self.args.poi_embed_dim,
-                              dropout=self.args.gcn_dropout)
-        # Step3: 用转移注意图来模拟从一个POI到另一个POI的转移概率
-        self.node_attn_model = NodeAttnMap(in_features=self.args.gcn_nfeat, nhid=self.args.node_attn_nhid, use_mask=False)
+        pe = torch.zeros(max_len, d_model)
+        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+        pe = pe.unsqueeze(0).transpose(0, 1)
+        self.register_buffer('pe', pe)
 
-        self.rnn = nn.RNN(self.args.poi_num * 2, self.args.hidden_size, batch_first=True)
-        self.fc = nn.Linear(self.args.hidden_size, self.args.poi_num)
-        # ========== 估计成本h
-        # Step1: 利用图神经网络估计到目的地的代价
-        # Step2: 引入多头注意力机制
+    def forward(self, x):
+        x = x + self.pe[:x.size(0), :]
+        return self.dropout(x)
 
-    def forward(self, X, A):
+
+class TransformerModel(nn.Module):
+    def __init__(self, num_poi, num_cat, embed_size, nhead, nhid, nlayers, dropout=0.5):
         '''
-        combined_input = torch.cat((distance, probability), dim=1)
-        g, hidden = self.rnn(combined_input)
-        g = self.fc(g)
+        num_poi：POI（Point of Interest）的数量。
+        num_cat：类别的数量。
+        embed_size：嵌入向量的维度。
+        nhead：多头注意力的头数。
+        nhid：隐藏层的维度。
+        nlayers：Transformer 编码器的层数。
+        dropout：Dropout 层的丢弃率，默认为 0.5。
         '''
-        g = self.node_attn_model(X, A)
-        g = nn.functional.softmax(g)
-        return g
+        super(TransformerModel, self).__init__()
+        from torch.nn import TransformerEncoder, TransformerEncoderLayer
+        self.model_type = 'Transformer'
+        self.pos_encoder = PositionalEncoding(embed_size, dropout)  # 给输入序列添加位置编码
+        encoder_layers = TransformerEncoderLayer(embed_size, nhead, nhid, dropout)
+        self.transformer_encoder = TransformerEncoder(encoder_layers, nlayers)  # 堆叠多个 Transformer 编码器层
+        # self.encoder = nn.Embedding(num_poi, embed_size)
+        self.embed_size = embed_size
+        self.decoder_poi = nn.Linear(embed_size, num_poi)   # 线性层，用于将 Transformer 输出转换为 POI 的预测结果
+        self.decoder_time = nn.Linear(embed_size, 1)
+        self.decoder_cat = nn.Linear(embed_size, num_cat)
+        self.init_weights() # 初始化模型参数
+
+    # 生成一个用于遮蔽输入序列中未来位置的掩码
+    def generate_square_subsequent_mask(self, sz):
+        mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
+        # 用负无穷填充了非上三角部分，以便在计算注意力时忽略未来位置的信息
+        mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
+        return mask
+
+    def init_weights(self):
+        initrange = 0.1
+        self.decoder_poi.bias.data.zero_()  # 将偏置项初始化为零
+        self.decoder_poi.weight.data.uniform_(-initrange, initrange)    # 将权重项初始化为均匀分布的随机值
+
+    def forward(self, src, src_mask):
+        src = src * math.sqrt(self.embed_size)
+        src = self.pos_encoder(src)
+        x = self.transformer_encoder(src, src_mask)
+        out_poi = self.decoder_poi(x)
+        out_time = self.decoder_time(x)
+        out_cat = self.decoder_cat(x)
+        return out_poi, out_time, out_cat

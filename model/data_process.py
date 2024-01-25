@@ -150,29 +150,32 @@ def load_poi_features(path):
     return X
 
 
-def load_distance(path):
-    d = np.loadtxt(path, delimiter=',')
-    return d
-
-
 # 生成字典
 def initiate_dict():
     spot_df = pd.read_csv('../data/spot.csv', encoding='ANSI')
-    food_df = pd.read_csv('../data/food.csv', encoding='ANSI')
+    # food_df = pd.read_csv('../data/food.csv', encoding='ANSI')
     # trans_df = pd.read_csv('../data/transportation.csv', encoding='ANSI')
     # 生成POI ID字典
     spot_ids = list(set(spot_df['id'].tolist()))
-    food_ids = list(set(food_df['id'].tolist()))
+    # food_ids = list(set(food_df['id'].tolist()))
     # trans_ids = list(set(trans_df['id'].tolist()))
-    poi_ids = spot_ids + food_ids
+    poi_ids = spot_ids
     poi_id_dict = dict(zip(poi_ids, range(len(poi_ids))))
     # 生成POI种类字典
     spot_ids = list(set(spot_df['category'].tolist()))
-    food_ids = list(set(food_df['category_id'].tolist()))
+    # food_ids = list(set(food_df['category_id'].tolist()))
     # trans_ids = list(set(trans_df['category'].tolist()))
-    cat_ids = spot_ids + food_ids
+    cat_ids = spot_ids
     cat_id_dict = dict(zip(cat_ids, range(len(cat_ids))))
-    return poi_id_dict, cat_id_dict
+    # 生成POI ID：CAT ID字典
+    poi_cat_dict = {}
+    for i, row in spot_df.iterrows():
+        poi_cat_dict[poi_id_dict[row['id']]] = cat_id_dict[row['category']]
+    # 生成用户ID字典
+    traj_df = pd.read_csv('../data/traj.csv')
+    user_ids = [str(each) for each in list(set(traj_df['user'].to_list()))]
+    user_id_dict = dict(zip(user_ids, range(len(user_ids))))
+    return poi_id_dict, cat_id_dict, poi_cat_dict, user_id_dict
 
 
 # 计算拉普拉斯矩阵
@@ -201,6 +204,50 @@ def calculate_laplacian_matrix(adj_mat, mat_type):
         return hat_rw_normd_lap_mat
     else:
         raise ValueError(f'ERROR: {mat_type} is unknown.')
+
+
+def maksed_mse_loss(input, target, mask_value=-1):
+    mask = target == mask_value
+    out = (input[~mask] - target[~mask]) ** 2
+    loss = out.mean()
+    return loss
+
+
+def top_k_acc_last_timestep(y_true_seq, y_pred_seq, k):
+    """ next poi metrics """
+    y_true = y_true_seq[-1]
+    y_pred = y_pred_seq[-1]
+    top_k_rec = y_pred.argsort()[-k:][::-1]
+    idx = np.where(top_k_rec == y_true)[0]
+    if len(idx) != 0:
+        return 1
+    else:
+        return 0
+
+
+def mAP_metric_last_timestep(y_true_seq, y_pred_seq, k):
+    """ next poi metrics """
+    # AP: area under PR curve
+    # But in next POI rec, the number of positive sample is always 1. Precision is not well defined.
+    # Take def of mAP from Personalized Long- and Short-term Preference Learning for Next POI Recommendation
+    y_true = y_true_seq[-1]
+    y_pred = y_pred_seq[-1]
+    rec_list = y_pred.argsort()[-k:][::-1]
+    r_idx = np.where(rec_list == y_true)[0]
+    if len(r_idx) != 0:
+        return 1 / (r_idx[0] + 1)
+    else:
+        return 0
+
+
+def MRR_metric_last_timestep(y_true_seq, y_pred_seq):
+    """ next poi metrics """
+    # Mean Reciprocal Rank: Reciprocal of the rank of the first relevant item
+    y_true = y_true_seq[-1]
+    y_pred = y_pred_seq[-1]
+    rec_list = y_pred.argsort()[-len(y_pred):][::-1]
+    r_idx = np.where(rec_list == y_true)[0][0]
+    return 1 / (r_idx + 1)
 
 
 if __name__ == '__main__':
