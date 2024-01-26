@@ -5,6 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 from scipy.sparse.linalg import eigsh
 from geopy.distance import geodesic
+import csv
 
 
 # 构造轨迹图
@@ -136,6 +137,42 @@ def trans2csv(G):
             print(f'{node_name},{checkin_cnt}, {name}, {latitude}, {longitude}', file=f)
 
 
+def generate_time():
+    spot_df = pd.read_csv(os.path.join('../data/spot.csv'), encoding='ANSI')
+    traj_df = pd.read_csv(os.path.join('../data/traj.csv'))
+    users = list(set(traj_df['user'].to_list()))
+    index = 0
+    for user_id in users:
+        user_df = traj_df[traj_df['user'] == user_id]
+        day_count = 1
+        visit = []
+        for i, row in user_df.iterrows():
+            day_id = row['day']
+            if day_id != day_count or i == (user_df.shape[0] + index - 1):
+                if i == (user_df.shape[0] + index - 1):
+                    visit.append(row['poi'])
+                    index += user_df.shape[0]
+                recommend_time = []
+                for each in visit:
+                    recommend_time.append(spot_df[spot_df['id'] == each].iloc[0]['recommend_time'])
+                sum_time = sum(recommend_time)
+                for j in range(len(recommend_time)):
+                    recommend_time[j] /= sum_time
+                    recommend_time[j] *= 12
+                visit_time = [9]
+                csvFile = open('../data/test3.csv', "a", newline='')
+                writer = csv.writer(csvFile)
+                writer.writerow([0, visit_time[0]])
+                for j in range(1, len(recommend_time)):
+                    visit_time.append(visit_time[j-1]+recommend_time[j-1])
+                    writer.writerow([j, visit_time[j]])
+                if i != (user_df.shape[0] + index - 1):
+                    day_count = day_id
+                    visit = [row['poi']]
+            else:
+                visit.append(row['poi'])
+
+
 # 加载转移矩阵
 def load_matrix(path):
     # A是(num, num)的矩阵，内容是路线吸引力
@@ -251,13 +288,14 @@ def MRR_metric_last_timestep(y_true_seq, y_pred_seq):
 
 
 if __name__ == '__main__':
+    '''
     print('----------Building trajectory graph ----------')
     G, _, _ = build_traj_graph()
     traj2csv(G)
-    '''
     trans_df = pd.read_csv(os.path.join('../data/transportation.csv'), encoding='ANSI')
     print('----------Building transportation graph ----------')
     G = build_trans_graph(trans_df)
     trans2csv(G)
     initiate_dict()
     '''
+    generate_time()

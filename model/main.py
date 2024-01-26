@@ -1,6 +1,7 @@
-from train import train
+from train import train, predict
 import argparse
 import torch
+from algorithm import get_cost, ant_colony, evaluate, print_plan
 
 if __name__ == '__main__':
     # ========== 设置超参数
@@ -14,6 +15,7 @@ if __name__ == '__main__':
     parser.add_argument('--data-train', type=str, default='../data/traj.csv', help='Training data path')
     parser.add_argument('--poi-embed-dim', type=int, default=128, help='POI embedding dimensions')
     parser.add_argument('--user-embed-dim', type=int, default=128, help='User embedding dimensions')
+    parser.add_argument('--time-embed-dim', type=int, default=32, help='Time embedding dimensions')
     parser.add_argument('--gcn-dropout', type=float, default=0.3, help='Dropout rate for gcn')
     parser.add_argument('--gcn-nhid', type=list, default=[32, 64], help='List of hidden dims for gcn layers')
     parser.add_argument('--node-attn-nhid', type=int, default=128, help='Node attn map hidden dimensions')
@@ -32,6 +34,22 @@ if __name__ == '__main__':
     parser.add_argument('--weight_decay', type=float, default=5e-4, help='Weight decay (L2 loss on parameters).')
     parser.add_argument('--short-traj-thres', type=int, default=2, help='Remove over-short trajectory')
     parser.add_argument('--workers', type=int, default=0, help='Num of workers for dataloader.')
+    parser.add_argument('--model-path', type=str, default='../output/exp-3/checkpoints/best_epoch.state.pt', help='Model path.')
     args = parser.parse_args()
+
     # ========== 训练
-    train(args)
+    # train(args)
+
+    # ========== 得到初步行程规划
+    cost = get_cost()
+    plan = ant_colony(cost, [10001, 10003, 10005, 10006, 10007, 10008, 10009, 10036, 10122])
+    print('---------- Original Plan ----------')
+    print_plan(plan)
+    score = evaluate(plan)
+
+    # ========== 使用模型丰富行程
+    new_plan = predict(args, 1, plan)
+    print('---------- Improved Plan ----------')
+    print_plan(new_plan)
+    new_score = evaluate(new_plan)
+    print('Improved by: %.2f%%' % ((new_score - score) / score * 100))

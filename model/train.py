@@ -79,7 +79,7 @@ def train(args):
     class TrajectoryDatasetTrain(Dataset):
         def __init__(self, train_df):
             self.df = train_df
-            self.traj_seqs = []  # traj id: user id + traj no.
+            self.traj_seqs = []
             self.input_seqs = []
             self.label_seqs = []
 
@@ -87,7 +87,7 @@ def train(args):
                 traj_df = train_df[train_df['user'] == traj_id]
                 poi_ids = traj_df['poi'].to_list()
                 poi_idxs = [poi_id_dict[each] for each in poi_ids]
-                time_feature = traj_df['day'].to_list()
+                time_feature = traj_df['norm'].to_list()
                 input_seq = []
                 label_seq = []
                 for i in range(len(poi_idxs) - 1):
@@ -128,9 +128,11 @@ def train(args):
     node_attn_model = NodeAttnMap(in_features=X.shape[1], nhid=args.node_attn_nhid, use_mask=False)
     num_users = len(user_id_dict)
     user_embed_model = UserEmbeddings(num_users, args.user_embed_dim)
+    time_embed_model = Time2Vec(args.time_embed_dim)
     cat_embed_model = CategoryEmbeddings(num_cats, args.cat_embed_dim)
     embed_fuse_model1 = FuseEmbeddings(args.user_embed_dim, args.poi_embed_dim)
-    args.seq_input_embed = args.poi_embed_dim + args.user_embed_dim + args.cat_embed_dim
+    embed_fuse_model2 = FuseEmbeddings(args.time_embed_dim, args.cat_embed_dim)
+    args.seq_input_embed = args.poi_embed_dim + args.user_embed_dim + args.time_embed_dim + args.cat_embed_dim
     seq_model = TransformerModel(num_pois,
                                  num_cats,
                                  args.seq_input_embed,
@@ -141,8 +143,10 @@ def train(args):
     optimizer = optim.Adam(params=list(poi_embed_model.parameters()) +
                                   list(node_attn_model.parameters()) +
                                   list(user_embed_model.parameters()) +
+                                  list(time_embed_model.parameters()) +
                                   list(cat_embed_model.parameters()) +
                                   list(embed_fuse_model1.parameters()) +
+                                  list(embed_fuse_model2.parameters()) +
                                   list(seq_model.parameters()),
                            lr=args.lr,
                            weight_decay=args.weight_decay)
@@ -156,6 +160,7 @@ def train(args):
         # user day seq name poi
         # Parse sample
         input_seq = [each[0] for each in sample[1]]
+        input_seq_time = [each[1] for each in sample[1]]
         input_seq_cat = [poi_cat_dict[each] for each in input_seq]
         # User to embedding
         user_id = sample[0]
@@ -168,14 +173,19 @@ def train(args):
         for idx in range(len(input_seq)):
             poi_embedding = poi_embeddings[input_seq[idx]]
             poi_embedding = torch.squeeze(poi_embedding).to(device=args.device)
+            # Time to vector
+            time_embedding = time_embed_model(
+                torch.tensor([input_seq_time[idx]], dtype=torch.float).to(device=args.device))
+            time_embedding = torch.squeeze(time_embedding).to(device=args.device)
             # Categroy to embedding
             cat_idx = torch.LongTensor([input_seq_cat[idx]]).to(device=args.device)
             cat_embedding = cat_embed_model(cat_idx)
             cat_embedding = torch.squeeze(cat_embedding)
             # Fuse user+poi embeds
             fused_embedding1 = embed_fuse_model1(user_embedding, poi_embedding)
-            # Concat cat after user+poi
-            concat_embedding = torch.cat((fused_embedding1, cat_embedding), dim=-1)
+            fused_embedding2 = embed_fuse_model2(time_embedding, cat_embedding)
+            # Concat time, cat after user+poi
+            concat_embedding = torch.cat((fused_embedding1, fused_embedding2), dim=-1)
             # Save final embed
             input_seq_embed.append(concat_embedding)
         return input_seq_embed
@@ -192,7 +202,10 @@ def train(args):
     # ========== 训练
     poi_embed_model = poi_embed_model.to(device=args.device)
     node_attn_model = node_attn_model.to(device=args.device)
+    user_embed_model = user_embed_model.to(device=args.device)
+    time_embed_model = time_embed_model.to(device=args.device)
     cat_embed_model = cat_embed_model.to(device=args.device)
+    embed_fuse_model2 = embed_fuse_model2.to(device=args.device)
     seq_model = seq_model.to(device=args.device)
 
     train_epochs_top1_acc_list = []
@@ -212,7 +225,11 @@ def train(args):
         logging.info(f"{'*' * 50}Epoch:{epoch:03d}{'*' * 50}\n")
         poi_embed_model.train()
         node_attn_model.train()
+        user_embed_model.train()
+        time_embed_model.train()
         cat_embed_model.train()
+        embed_fuse_model1.train()
+        embed_fuse_model2.train()
         seq_model.train()
 
         train_batches_top1_acc_list = []
@@ -385,8 +402,10 @@ def train(args):
             'poi_embed_state_dict': poi_embed_model.state_dict(),
             'node_attn_state_dict': node_attn_model.state_dict(),
             'user_embed_state_dict': user_embed_model.state_dict(),
+            'time_embed_state_dict': time_embed_model.state_dict(),
             'cat_embed_state_dict': cat_embed_model.state_dict(),
             'embed_fuse1_state_dict': embed_fuse_model1.state_dict(),
+            'embed_fuse2_state_dict': embed_fuse_model2.state_dict(),
             'seq_model_state_dict': seq_model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
             'user_id_dict': user_id_dict,
@@ -431,3 +450,169 @@ def train(args):
                   file=f)
             print(f'train_epochs_mAP20_list={[float(f"{each:.4f}") for each in train_epochs_mAP20_list]}', file=f)
             print(f'train_epochs_mrr_list={[float(f"{each:.4f}") for each in train_epochs_mrr_list]}', file=f)
+
+
+def predict(args, cur_user, plan):
+    # ========== 加载模型
+    raw_X = load_poi_features(args.data_node_feats)
+    num_pois = raw_X.shape[0]
+    one_hot_encoder = OneHotEncoder()
+    cat_list = list(raw_X[:, 2])
+    one_hot_encoder.fit(list(map(lambda x: [x], cat_list)))
+    one_hot_rlt = one_hot_encoder.transform(list(map(lambda x: [x], cat_list))).toarray()
+    num_cats = one_hot_rlt.shape[-1]
+    X = np.zeros((num_pois, raw_X.shape[-1] - 1 + num_cats), dtype=np.float32)
+    X[:, 0] = raw_X[:, 0]
+    X[:, 2:num_cats + 2] = one_hot_rlt  # 把one hot编码插入到原始数据的第三列
+    X[:, num_cats + 2:] = raw_X[:, 3:]
+    with open(os.path.join('../data/one-hot-encoder.pkl'), 'wb') as f:
+        pickle.dump(one_hot_encoder, f)
+    raw_A = load_matrix(args.data_adj_mtx)
+    A = calculate_laplacian_matrix(raw_A, mat_type='hat_rw_normd_lap_mat')
+    poi_id_dict, cat_id_dict, poi_cat_dict, user_id_dict = initiate_dict()
+    if isinstance(X, np.ndarray):
+        X = torch.from_numpy(X)
+        A = torch.from_numpy(A)
+    X = X.to(device=args.device, dtype=torch.float)
+    A = A.to(device=args.device, dtype=torch.float)
+    args.gcn_nfeat = X.shape[1]
+    poi_embed_model = GCN(ninput=args.gcn_nfeat,
+                          nhid=args.gcn_nhid,
+                          noutput=args.poi_embed_dim,
+                          dropout=args.gcn_dropout)
+    node_attn_model = NodeAttnMap(in_features=X.shape[1], nhid=args.node_attn_nhid, use_mask=False)
+    num_users = len(user_id_dict)
+    user_embed_model = UserEmbeddings(num_users, args.user_embed_dim)
+    time_embed_model = Time2Vec(args.time_embed_dim)
+    cat_embed_model = CategoryEmbeddings(num_cats, args.cat_embed_dim)
+    embed_fuse_model1 = FuseEmbeddings(args.user_embed_dim, args.poi_embed_dim)
+    embed_fuse_model2 = FuseEmbeddings(args.time_embed_dim, args.cat_embed_dim)
+    args.seq_input_embed = args.poi_embed_dim + args.user_embed_dim + args.time_embed_dim + args.cat_embed_dim
+    seq_model = TransformerModel(num_pois,
+                                 num_cats,
+                                 args.seq_input_embed,
+                                 args.transformer_nhead,
+                                 args.transformer_nhid,
+                                 args.transformer_nlayers,
+                                 dropout=args.transformer_dropout)
+
+    state_dict = torch.load(args.model_path)
+    poi_embed_model.load_state_dict(state_dict['poi_embed_state_dict'])
+    node_attn_model.load_state_dict(state_dict['node_attn_state_dict'])
+    user_embed_model.load_state_dict(state_dict['user_embed_state_dict'])
+    time_embed_model.load_state_dict(state_dict['time_embed_state_dict'])
+    cat_embed_model.load_state_dict(state_dict['cat_embed_state_dict'])
+    embed_fuse_model1.load_state_dict(state_dict['embed_fuse1_state_dict'])
+    embed_fuse_model2.load_state_dict(state_dict['embed_fuse2_state_dict'])
+    seq_model.load_state_dict(state_dict['seq_model_state_dict'])
+
+    def input_traj_to_embeddings(sample, poi_embeddings):
+        # user day seq name poi
+        # Parse sample
+        input_seq = [each[0] for each in sample[1]]
+        input_seq_time = [each[1] for each in sample[1]]
+        input_seq_cat = [poi_cat_dict[each] for each in input_seq]
+        # User to embedding
+        user_id = sample[0]
+        user_idx = user_id_dict[str(user_id)]
+        input = torch.LongTensor([user_idx]).to(device=args.device)
+        user_embedding = user_embed_model(input)
+        user_embedding = torch.squeeze(user_embedding)
+        # POI to embedding and fuse embeddings
+        input_seq_embed = []
+        for idx in range(len(input_seq)):
+            poi_embedding = poi_embeddings[input_seq[idx]]
+            poi_embedding = torch.squeeze(poi_embedding).to(device=args.device)
+            # Time to vector
+            time_embedding = time_embed_model(
+                torch.tensor([input_seq_time[idx]], dtype=torch.float).to(device=args.device))
+            time_embedding = torch.squeeze(time_embedding).to(device=args.device)
+            # Categroy to embedding
+            cat_idx = torch.LongTensor([input_seq_cat[idx]]).to(device=args.device)
+            cat_embedding = cat_embed_model(cat_idx)
+            cat_embedding = torch.squeeze(cat_embedding)
+            # Fuse user+poi embeds
+            fused_embedding1 = embed_fuse_model1(user_embedding, poi_embedding)
+            fused_embedding2 = embed_fuse_model2(time_embedding, cat_embedding)
+            # Concat time, cat after user+poi
+            concat_embedding = torch.cat((fused_embedding1, fused_embedding2), dim=-1)
+            # Save final embed
+            input_seq_embed.append(concat_embedding)
+        return input_seq_embed
+
+    def adjust_pred_prob_by_graph(y_pred_poi):
+        y_pred_poi_adjusted = torch.zeros_like(y_pred_poi)
+        attn_map = node_attn_model(X, A)
+        for i in range(len(batch_seq_lens)):
+            traj_i_input = batch_input_seqs[i]  # list of input check-in pois
+            for j in range(len(traj_i_input)):
+                y_pred_poi_adjusted[i, j, :] = attn_map[traj_i_input[j], :] + y_pred_poi[i, j, :]
+        return y_pred_poi_adjusted
+
+    # ========== 预测
+    poi_embed_model.eval()
+    node_attn_model.eval()
+    user_embed_model.eval()
+    time_embed_model.eval()
+    cat_embed_model.eval()
+    embed_fuse_model1.eval()
+    embed_fuse_model2.eval()
+    seq_model.eval()
+
+    batch_input_seqs = []
+    batch_seq_lens = []
+    batch_seq_embeds = []
+    poi_embeddings = poi_embed_model(X, A)
+    # plan: {day1: id, name, start_time, end_time}
+    # sample: user, [(poi, time),()]
+    batch = []
+    sample = [cur_user]
+    poi_time = []
+    plan_poi = {}
+    select_poi = []
+    for key in plan:
+        p = plan[key]
+        plan_poi[key] = [0, []]   # {day1: 是否需要补充行程, [已有poi]}
+        for each in p:
+            plan_poi[key][1].append(each[0])
+            select_poi.append(each[0])
+            poi_time.append((poi_id_dict[each[0]], each[2] * 2 / 48))
+        sample.append(poi_time)
+        if p[-1][-2] < 18:  # 结束时间小于18点
+            plan_poi[key][0] = 1
+            batch.append(sample)
+        sample = [cur_user]
+        poi_time = []
+    need = True
+    while need:
+        for sample in batch:
+            input_seq = [each[0] for each in sample[1]]
+            input_seq_embed = torch.stack(input_traj_to_embeddings(sample, poi_embeddings))
+            batch_seq_embeds.append(input_seq_embed)
+            batch_seq_lens.append(len(input_seq))
+            batch_input_seqs.append(input_seq)
+        batch_padded = pad_sequence(batch_seq_embeds, batch_first=True, padding_value=-1)
+        x = batch_padded.to(device=args.device, dtype=torch.float)
+        src_mask = seq_model.generate_square_subsequent_mask(x.shape[0]).to(args.device)
+        y_pred_poi, y_pred_time, y_pred_cat = seq_model(x, src_mask)
+        y_pred_poi_adjusted = adjust_pred_prob_by_graph(y_pred_poi)     # need_day * poi * 313
+        index = 0
+        for key in plan_poi:
+            if plan_poi[key][0] == 1:     # 如果需要补充行程
+                sorted_id = sorted(range(len(y_pred_poi_adjusted[index][-1])), key=lambda k: y_pred_poi_adjusted[index][-1][k], reverse=True)
+                for j in sorted_id:
+                    if (j + 10001) not in select_poi and ((plan[key][-1][-2] + 1) < 17 or ((plan[key][-1][-2] + 1) >= 17 and raw_X[j][9] == 1)):
+                        plan_poi[key][1].append(j + 10001)
+                        select_poi.append(j + 10001)
+                        plan[key].append([j + 10001, raw_X[j][1], plan[key][-1][-2] + 1, plan[key][-1][-2] + 1 + raw_X[j][8], raw_X[j][5]])
+                        batch[index][1].append((poi_id_dict[j + 10001], (plan[key][-1][-2] + 1 + raw_X[j][8])*2/48))
+                        if plan[key][-1][-2] > 18:
+                            plan_poi[key][0] = 0
+                        break
+                index += 1
+        need = False
+        for key in plan_poi:
+            if plan_poi[key][0] == 1:
+                need = True
+                break
+    return plan

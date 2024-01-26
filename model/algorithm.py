@@ -470,7 +470,7 @@ def ant_colony(all_cost, nodes):
     belong = {}
     for i in range(len(route)):
         try:
-            index = route.index(spots[route[i]][10] % 10000 - 1)
+            index = route.index(nodes.index(spots[route[i]][10] % 10000 - 1))
         except:
             continue
         if index in belong:
@@ -486,8 +486,7 @@ def ant_colony(all_cost, nodes):
             del belong[key]
     cur_day = 1
     cur_time = 9
-    plan = {}   # {day1: id, name, start_time, end_time}
-    plan_fee = 0
+    plan = {}   # {day1: id, name, start_time, end_time, price}
     i = 0
     # 切分天数
     while i != len(route):
@@ -498,14 +497,12 @@ def ant_colony(all_cost, nodes):
             end_time = cur_time + spots[route[i]][8]
         if cur_day not in plan:
             plan[cur_day] = []
-        plan[cur_day].append([route[i] + 10001, spots[route[i]][1], cur_time, end_time])
-        plan_fee += spots[route[i]][5]
+        plan[cur_day].append([spots[route[i]][0], spots[route[i]][1], cur_time, end_time, spots[route[i]][5]])
         if i in belong:
             for j in range(len(belong[i])):
                 temp_time = cur_time + spots[route[belong[i][j]]][8]
-                plan[cur_day].append([route[belong[i][j]] + 10001, spots[route[belong[i][j]]][1], cur_time, temp_time])
+                plan[cur_day].append([spots[route[belong[i][j]]][0], spots[route[belong[i][j]]][1], cur_time, temp_time, spots[route[belong[i][j]]][5]])
                 cur_time = temp_time
-                plan_fee += spots[route[belong[i][j]]][5]
             if j != (len(belong[i]) - 1):
                 cur_time += trans_time[belong[i][j]][belong[i][j+1]]
             i = max(belong[i])
@@ -513,15 +510,25 @@ def ant_colony(all_cost, nodes):
         if i != (len(route) - 1):
             cur_time += trans_time[route[i]][route[i+1]]
         i += 1
-    plan_time = (len(plan) - 1) * 24 + list(plan.items())[-1][1][-1][-1]
+    return plan
+
+
+def print_plan(plan):
+    plan_fee = 0
+    plan_time = (len(plan) - 1) * 24 + list(plan.items())[-1][1][-1][-2]
     for key in plan:
         print('Day', key)
         p = plan[key]
         for each in p:
-            print(each[1], ':', each[2], '-', each[3])
+            plan_fee += each[4]
+            print(each[1], ':', each[2], '-', each[3], end=' ')
+            if each[4] != 0:
+                print('门票:', each[4], '元')
+            else:
+                print('')
     print('Total time:', plan_time)
     print('Total fee:', plan_fee)
-    return plan, plan_time, plan_fee
+    return plan_time, plan_fee
 
 
 # 根据POI种类丰富度和行程时间安排评估行程分数
@@ -529,14 +536,16 @@ def evaluate(plan):
     X = load_poi_features('../data/spot.csv')
     cat = set()
     play_time = 0
-    plan_time = (len(plan) - 1) * 12 + list(plan.items())[-1][1][-1][-1]
+    plan_time = 0
+    all_time = (len(plan) - 1) * 12 + list(plan.items())[-1][1][-1][-2]
     for key in plan:
         p = plan[key]
+        plan_time += (plan[key][-1][-2] - plan[key][0][2])
         for each in p:
             cat.add(X[each[0]-10001][2])
             play_time += (each[3] - each[2])
-    score = 0.5 * len(cat) / 6 + 0.5 * play_time / plan_time
-    print(score)
+    score = 0.5 * len(cat) / 6 + 0.3 * play_time / plan_time + 0.2 * plan_time / all_time
+    print('Score: %.2f' % (score * 100))
     return score
 
 
@@ -576,5 +585,7 @@ if __name__ == '__main__':
     # 1鼓浪屿，3园林植物园，5日光岩，6环岛路，7曾厝垵，8海底世界，9中山路，36海湾公园，122厦大
     # 1-5-8-9-6-7-122-3-36
     cost = get_cost()
-    plan, total_time, total_fee = ant_colony(cost, [10001, 10003, 10005, 10006, 10007, 10008, 10009, 10036, 10122])
+    plan = ant_colony(cost, [10001, 10003, 10005, 10006, 10007, 10008, 10009, 10036, 10122])
+    print('---------- Original Plan ----------')
+    print_plan(plan)
     score = evaluate(plan)
