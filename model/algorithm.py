@@ -478,12 +478,17 @@ def ant_colony(all_cost, nodes):
         else:
             belong[index] = [i]
     # 把最大的地区换到最前面
+    bk = []
     for key in belong:
-        b = max(belong[key])
-        if key > b:
-            route[key], route[b] = route[b], route[key]
-            belong[b] = belong[key]
-            del belong[key]
+        bk.append(key)
+    for each in bk:
+        b = min(belong[each])
+        if each > b:
+            route[each], route[b] = route[b], route[each]
+            belong[b] = belong[each]
+            i = belong[b].index(b)
+            belong[b][i] = each
+            del belong[each]
     cur_day = 1
     cur_time = 9
     plan = {}   # {day1: id, name, start_time, end_time, price}
@@ -515,20 +520,152 @@ def ant_colony(all_cost, nodes):
 
 def print_plan(plan):
     plan_fee = 0
-    plan_time = (len(plan) - 1) * 24 + list(plan.items())[-1][1][-1][-2]
+    plan_time = (len(plan) - 1) * 24
+    if int(list(plan.items())[-1][1][-1][0] / 10000) == 1:
+        plan_time += list(plan.items())[-1][1][-1][-2]
+    else:
+        plan_time += list(plan.items())[-1][1][-2][-2]
     for key in plan:
-        print('Day', key)
+        print('>>> Day', key)
         p = plan[key]
         for each in p:
             plan_fee += each[4]
-            print(each[1], ':', each[2], '-', each[3], end=' ')
-            if each[4] != 0:
-                print('门票:', each[4], '元')
-            else:
-                print('')
-    print('Total time:', plan_time)
-    print('Total fee:', plan_fee)
+            if int(each[0] / 10000) == 1:    # 景点
+                print(each[1], ':', end=' ')
+                print(math.floor(each[2]), end='')
+                if math.floor(each[2]) != each[2]:
+                    print(':30-', end='')
+                else:
+                    print(':00-', end='')
+                print(math.floor(each[3]), end='')
+                if math.floor(each[3]) != each[3]:
+                    print(':30', end=' ')
+                else:
+                    print(':00', end=' ')
+                if each[4] != 0:
+                    print('门票:', each[4], '元')
+                else:
+                    print('')
+            else:   # 餐厅
+                print(each[1], ': 评分', each[2], '(', end='')
+                print(each[3], end='')
+                print(')', end=' ')
+                if each[4] != 0:
+                    print('人均:', each[4], '元')
+                else:
+                    print('')
+    print('Total time:\t', plan_time, '小时')
+    print('Total fee:\t', plan_fee, '元')
     return plan_time, plan_fee
+
+
+def recommend_food(point1, point2, constraint):
+    food = load_poi_features('../data/food.csv')
+    distance = []
+    if point1 is not None and point2 is not None:
+        line = np.linalg.norm(point1 - point2)
+        for i in range(food.shape[0]):
+            point = np.array([food[i][9], food[i][8]])
+            vec1 = point1 - point
+            vec2 = point2 - point
+            distance.append(np.abs(np.cross(vec1, vec2)) / line)
+    elif point1 is not None and point2 is None:
+        for i in range(food.shape[0]):
+            distance.append(math.dist(point1, np.array([food[i][9], food[i][8]])))
+    else:
+        return None
+    sorted_id = sorted(range(len(distance)), key=lambda k: distance[k], reverse=False)
+    # 筛选离两个景点最近的前20个餐厅，符合类别要求
+    food_cand = []
+    comment = []
+    cand_count = 0
+    for each in sorted_id:
+        satisfy = True
+        # Todo: 约束还可以加上预算
+        for c in constraint['lunch-no']:
+            if food[each][4] == c:
+                satisfy = False
+                break
+        for c in constraint['chosen']:
+            if food[each][0] == c:
+                satisfy = False
+                break
+        if satisfy:
+            food_cand.append(food[each])
+            comment.append(food[each][3])
+            cand_count += 1
+            if cand_count == 20:
+                break
+    # 综合距离2、评分5、评论人数3确定优先顺序
+    score = []
+    comment_min = min(comment)
+    k1 = 30 / (max(comment) - comment_min)
+    for i in range(20):
+        score.append((20 - 0.5 * i) + food_cand[i][2] * 10 + k1 * (food_cand[i][3] - comment_min))
+    sorted_id = sorted(range(len(score)), key=lambda k: score[k], reverse=True)
+    food_choose = food_cand[sorted_id[0]]
+    return food_choose
+
+
+def improve_plan(plan):
+    spot = load_poi_features('../data/spot.csv')
+    popular = []
+    constraint = {'lunch-no': [203, 219, 220, 221, 228, 232, 233, 250, 256, 257, 260, 265],
+                  'dinner-no': [203, 221, 228, 232, 233, 250, 256, 257, 260, 265],
+                  'chosen': []}
+    for key in plan:
+        p = plan[key]
+        # ========== 插入午餐
+        lunch_index = 0
+        lunch_min = 99
+        pop = 0
+        for i in range(len(p)):
+            pop += spot[p[i][0]-10001][4]
+            if abs(p[i][2] - 12) <= lunch_min:
+                lunch_index = i
+                lunch_min = abs(p[i][2] - 12)
+        popular.append(pop)
+        point1 = point2 = None
+        # 12-13 18-19 在index之前插入餐厅
+        if 0 <= lunch_min <= 1:
+            point1 = np.array([spot[p[lunch_index - 1][0] - 10001][6], spot[p[lunch_index - 1][0] - 10001][7]])
+            point2 = np.array([spot[p[lunch_index][0] - 10001][6], spot[p[lunch_index][0] - 10001][7]])
+        # 在这之外的情况 中间是否能插入
+        else:
+            point1 = np.array([spot[p[lunch_index][0] - 10001][6], spot[p[lunch_index][0] - 10001][7]])
+        # 考虑类别，排除203冰激淋 219酒吧 220居酒屋 221咖啡店 228零食 232 233面包 250卤味 256西式快餐 257甜点 260小吃 265饮品
+        food_choose = recommend_food(point1, point2, constraint)
+        constraint['chosen'].append(food_choose[0])
+        # 食物: id, name, score, cat, price
+        plan[key].insert(lunch_index, [food_choose[0], food_choose[1], food_choose[2], food_choose[5], food_choose[6]])
+        for i in range(lunch_index + 1, len(plan[key])):
+            plan[key][i][2] += 1
+            plan[key][i][3] += 1
+
+        # ========== 插入晚餐
+        dinner_index = 0
+        dinner_min = 99
+        p = plan[key]
+        for i in range(len(p)):
+            if (int(p[i][0] / 10000) == 1) and abs(p[i][3] - 18.5) <= dinner_min:
+                dinner_index = i
+                dinner_min = abs(p[i][3] - 18.5)
+        point1 = point2 = None
+        if 0 <= dinner_min <= 1 and dinner_index != (len(p) - 1):
+            point1 = np.array([spot[p[dinner_index][0] - 10001][6], spot[p[dinner_index][0] - 10001][7]])
+            point2 = np.array([spot[p[dinner_index + 1][0] - 10001][6], spot[p[dinner_index + 1][0] - 10001][7]])
+        else:
+            point1 = np.array([spot[p[dinner_index][0] - 10001][6], spot[p[dinner_index][0] - 10001][7]])
+        food_choose = recommend_food(point1, point2, constraint)
+        constraint['chosen'].append(food_choose[0])
+        plan[key].insert(dinner_index + 1, [food_choose[0], food_choose[1], food_choose[2], food_choose[5], food_choose[6]])
+
+    # ========== 调整行程，让更受欢迎的行程调到前面
+    sorted_id = sorted(range(len(popular)), key=lambda k: popular[k], reverse=True)
+    new_plan = {}
+    for i in range(len(sorted_id)):
+        new_plan[i+1] = plan[sorted_id[i]+1]
+    return new_plan
 
 
 # 根据POI种类丰富度和行程时间安排评估行程分数
@@ -537,15 +674,24 @@ def evaluate(plan):
     cat = set()
     play_time = 0
     plan_time = 0
-    all_time = (len(plan) - 1) * 12 + list(plan.items())[-1][1][-1][-2]
+    all_time = (len(plan) - 1) * 12
+    if int(list(plan.items())[-1][1][-1][0] / 10000) == 1:
+        all_time += list(plan.items())[-1][1][-1][-2]
+    else:
+        all_time += list(plan.items())[-1][1][-2][-2]
     for key in plan:
         p = plan[key]
-        plan_time += (plan[key][-1][-2] - plan[key][0][2])
+        if int(p[-1][0] / 10000) == 1:
+            plan_time += (p[-1][-2] - p[0][2])
+        else:
+            plan_time += (p[-2][-2] - p[0][2])
         for each in p:
-            cat.add(X[each[0]-10001][2])
-            play_time += (each[3] - each[2])
+            if int(each[0] / 10000) == 1:
+                cat.add(X[each[0]-10001][2])
+                play_time += (each[3] - each[2])
     score = 0.5 * len(cat) / 6 + 0.3 * play_time / plan_time + 0.2 * plan_time / all_time
-    print('Score: %.2f' % (score * 100))
+    print('Score: %.2f' % (score * 100), end='')
+    print('/100')
     return score
 
 
@@ -580,12 +726,23 @@ if __name__ == '__main__':
     print('Estimated total fee: ', taxi_fee, 'rmb')
     print('---------- Walk Route ----------')
     print('Estimated total time: ', walk_time, 'min')
-    '''
-    # cal_attraction()
-    # 1鼓浪屿，3园林植物园，5日光岩，6环岛路，7曾厝垵，8海底世界，9中山路，36海湾公园，122厦大
-    # 1-5-8-9-6-7-122-3-36
+    cal_attraction()
+    # 1鼓浪屿，3园林植物园，5日光岩，6环岛路，7曾厝垵，8海底世界，9中山路，36海湾公园，41厦大
+    # 1-5-8-9-6-7-41-3-36
     cost = get_cost()
-    plan = ant_colony(cost, [10001, 10003, 10005, 10006, 10007, 10008, 10009, 10036, 10122])
+    plan = ant_colony(cost, [10001, 10003, 10005, 10006, 10007, 10008, 10009, 10036, 10041])
     print('---------- Original Plan ----------')
     print_plan(plan)
     score = evaluate(plan)
+    '''
+    plan = {
+        1: [[10041, '厦门大学', 9, 11, 0.0], [10003, '厦门园林植物园', 11.5, 16.5, 30.0], [10007, '曾厝垵', 17.5, 20.5, 0.0]],
+        2: [[10006, '环岛路', 9, 14.0, 0.0], [10080, '演武大桥观景平台', 15.0, 16.0, 0.0], [10010, '云上厦门观光厅', 17.0, 18.0, 158.0],
+            [10015, '白城沙滩', 19.0, 21.0, 0.0]],
+        3: [[10001, '鼓浪屿', 9, 16.0, 0.0], [10008, '厦门海底世界', 9, 12.0, 107.0], [10005, '日光岩', 12.0, 14.0, 50.0],
+            [10009, '中山路步行街', 16.5, 19.5, 0.0]],
+        4: [[10036, '海湾公园', 9, 11.0, 0.0], [10075, '闽南古镇', 12.0, 14.0, 0.0], [10002, '胡里山炮台', 15.0, 17.0, 23.0],
+            [10018, '台湾小吃街', 18.0, 20.0, 0.0]]}
+    new_plan = improve_plan(plan)
+    print_plan(new_plan)
+    evaluate(new_plan)

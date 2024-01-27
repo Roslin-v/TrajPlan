@@ -601,7 +601,7 @@ def predict(args, cur_user, plan):
             if plan_poi[key][0] == 1:     # 如果需要补充行程
                 sorted_id = sorted(range(len(y_pred_poi_adjusted[index][-1])), key=lambda k: y_pred_poi_adjusted[index][-1][k], reverse=True)
                 for j in sorted_id:
-                    if (j + 10001) not in select_poi and ((plan[key][-1][-2] + 1) < 17 or ((plan[key][-1][-2] + 1) >= 17 and raw_X[j][9] == 1)):
+                    if (j + 10001) not in select_poi and ((plan[key][-1][-2] + 1) < 16 or ((plan[key][-1][-2] + 1) >= 16 and raw_X[j][9] == 1)):
                         plan_poi[key][1].append(j + 10001)
                         select_poi.append(j + 10001)
                         plan[key].append([j + 10001, raw_X[j][1], plan[key][-1][-2] + 1, plan[key][-1][-2] + 1 + raw_X[j][8], raw_X[j][5]])

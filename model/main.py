@@ -1,7 +1,7 @@
 from train import train, predict
 import argparse
 import torch
-from algorithm import get_cost, ant_colony, evaluate, print_plan
+from algorithm import get_cost, ant_colony, evaluate, print_plan, improve_plan
 
 if __name__ == '__main__':
     # ========== 设置超参数
@@ -42,13 +42,13 @@ if __name__ == '__main__':
 
     # ========== 得到初步行程规划
     cost = get_cost()
-    plan = ant_colony(cost, [10001, 10003, 10005, 10006, 10007, 10008, 10009, 10036, 10122])
+    plan = ant_colony(cost, [10001, 10002, 10003, 10005, 10006, 10007, 10008, 10009, 10041])
     print('---------- Original Plan ----------')
     print_plan(plan)
     score = evaluate(plan)
 
     # ========== 使用模型丰富行程
-    new_plan = predict(args, 1, plan)
+    new_plan = improve_plan(predict(args, 1, plan))
     print('---------- Improved Plan ----------')
     print_plan(new_plan)
     new_score = evaluate(new_plan)
