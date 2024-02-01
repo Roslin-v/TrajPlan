@@ -452,7 +452,7 @@ def train(args):
             print(f'train_epochs_mrr_list={[float(f"{each:.4f}") for each in train_epochs_mrr_list]}', file=f)
 
 
-def predict(args, cur_user, plan):
+def predict(args, cur_user, plan, constraint):
     # ========== 加载模型
     raw_X = load_poi_features(args.data_node_feats)
     num_pois = raw_X.shape[0]
@@ -601,10 +601,11 @@ def predict(args, cur_user, plan):
             if plan_poi[key][0] == 1:     # 如果需要补充行程
                 sorted_id = sorted(range(len(y_pred_poi_adjusted[index][-1])), key=lambda k: y_pred_poi_adjusted[index][-1][k], reverse=True)
                 for j in sorted_id:
-                    if (j + 10001) not in select_poi and ((plan[key][-1][-2] + 1) < 16 or ((plan[key][-1][-2] + 1) >= 16 and raw_X[j][9] == 1)):
+                    if (j + 10001) not in select_poi and ((plan[key][-1][-2] + 1) < 16 or ((plan[key][-1][-2] + 1) >= 16 and raw_X[j][9] == 1)) and (raw_X[j][5] + constraint['all-budget']) <= constraint['user-budget']:
                         plan_poi[key][1].append(j + 10001)
                         select_poi.append(j + 10001)
                         plan[key].append([j + 10001, raw_X[j][1], plan[key][-1][-2] + 1, plan[key][-1][-2] + 1 + raw_X[j][8], raw_X[j][5]])
+                        constraint['all-budget'] += raw_X[j][5]
                         batch[index][1].append((poi_id_dict[j + 10001], (plan[key][-1][-2] + 1 + raw_X[j][8])*2/48))
                         if plan[key][-1][-2] > 18:
                             plan_poi[key][0] = 0
@@ -615,4 +616,4 @@ def predict(args, cur_user, plan):
             if plan_poi[key][0] == 1:
                 need = True
                 break
-    return plan
+    return plan, constraint
