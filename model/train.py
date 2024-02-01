@@ -606,6 +606,7 @@ def predict(args, cur_user, plan, constraint):
                         select_poi.append(j + 10001)
                         plan[key].append([j + 10001, raw_X[j][1], plan[key][-1][-2] + 1, plan[key][-1][-2] + 1 + raw_X[j][8], raw_X[j][5]])
                         constraint['all-budget'] += raw_X[j][5]
+                        constraint['select-spot'].append(j + 10001)
                         batch[index][1].append((poi_id_dict[j + 10001], (plan[key][-1][-2] + 1 + raw_X[j][8])*2/48))
                         if plan[key][-1][-2] > 18:
                             plan_poi[key][0] = 0

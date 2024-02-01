@@ -616,7 +616,7 @@ class PlanManager:
         print('Total time:\t', self.constraint['all-time'], '小时')
         print('Total fee:\t', self.constraint['all-budget'], '元')
 
-    def recommend_food(self, point1, point2):
+    def recommend_food(self, point1, point2, decadence):
         distance = []
         if point1 is not None and point2 is not None:
             line = np.linalg.norm(point1 - point2)
@@ -637,15 +637,18 @@ class PlanManager:
         cand_count = 0
         for each in sorted_id:
             satisfy = True
+            # 考虑类型
             for c in self.constraint['lunch-no']:
                 if self.food_feat[each][4] == c:
                     satisfy = False
                     break
+            # 餐厅不能重复
             for c in self.constraint['select-food']:
                 if self.food_feat[each][0] == c:
                     satisfy = False
                     break
-            if (self.constraint['all-budget'] + self.food_feat[each][6]) > self.constraint['user-budget']:
+            # 满足预算（必须剩一点预算，保证之后几天有饭吃）
+            if self.food_feat[each][6] > (self.constraint['user-budget'] - self.constraint['all-budget']) * decadence:
                 satisfy = False
             if satisfy:
                 food_cand.append(self.food_feat[each])
@@ -686,7 +689,7 @@ class PlanManager:
             else:
                 point1 = np.array([self.spot_feat[p[lunch_index][0] - 10001][6], self.spot_feat[p[lunch_index][0] - 10001][7]])
             # 考虑类别，排除203冰激淋 219酒吧 220居酒屋 221咖啡店 228零食 232 233面包 250卤味 256西式快餐 257甜点 260小吃 265饮品
-            food_choose = self.recommend_food(point1, point2)
+            food_choose = self.recommend_food(point1, point2, (1 - (len(self.plan) - key) / len(self.plan)))
             self.constraint['select-food'].append(food_choose[0])
             # 食物: id, name, score, cat, price
             self.plan[key].insert(lunch_index, [food_choose[0], food_choose[1], food_choose[2], food_choose[5], food_choose[6]])
@@ -709,7 +712,7 @@ class PlanManager:
                 point2 = np.array([self.spot_feat[p[dinner_index + 1][0] - 10001][6], self.spot_feat[p[dinner_index + 1][0] - 10001][7]])
             else:
                 point1 = np.array([self.spot_feat[p[dinner_index][0] - 10001][6], self.spot_feat[p[dinner_index][0] - 10001][7]])
-            food_choose = self.recommend_food(point1, point2)
+            food_choose = self.recommend_food(point1, point2, (1 - (len(self.plan) - key) / len(self.plan) / 2))
             self.constraint['select-food'].append(food_choose[0])
             self.plan[key].insert(dinner_index + 1, [food_choose[0], food_choose[1], food_choose[2], food_choose[5], food_choose[6]])
             self.constraint['all-budget'] += food_choose[6]

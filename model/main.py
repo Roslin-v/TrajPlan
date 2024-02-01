@@ -64,10 +64,11 @@ if __name__ == '__main__':
     old_score = plan_manager.score
 
     # ========== 使用模型丰富行程
-    plan_manager.plan, plan_manager.constraint = predict(args, 1, plan_manager.plan, plan_manager.constraint)
-    plan_manager.improve_plan()
-    print('---------- Improved Plan ----------')
-    plan_manager.print_plan()
-    plan_manager.evaluate()
-    new_score = plan_manager.score
-    print('Improved by: %.2f%%' % ((new_score - old_score) / old_score * 100))
+    if plan_manager.constraint['all-time'] < plan_manager.constraint['user-time'] and plan_manager.constraint['all-budget'] < plan_manager.constraint['user-budget']:
+        plan_manager.plan, plan_manager.constraint = predict(args, 1, plan_manager.plan, plan_manager.constraint)
+        plan_manager.improve_plan()
+        print('---------- Improved Plan ----------')
+        plan_manager.print_plan()
+        plan_manager.evaluate()
+        new_score = plan_manager.score
+        print('Improved by: %.2f%%' % ((new_score - old_score) / old_score * 100))
