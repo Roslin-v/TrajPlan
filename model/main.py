@@ -47,7 +47,7 @@ if __name__ == '__main__':
 
     # ========== 得到初步行程规划
     # 约束：用户预计游玩时间，用户预算，实际游玩时间，实际预算，倾向于公共交通/打车，已选择的景点，已选择的餐厅，午饭不能去的类型，晚饭不能去的类型
-    constraint = {'user-time': 72,
+    constraint = {'user-time': 48,
                   'user-budget': 1000,
                   'all-time': 0,
                   'all-budget': 0,
@@ -57,6 +57,7 @@ if __name__ == '__main__':
                   'lunch-no': [203, 219, 220, 221, 228, 232, 233, 250, 256, 257, 260, 265],
                   'dinner-no': [203, 221, 228, 232, 233, 250, 256, 257, 260, 265]}
     plan_manager = PlanManager(constraint)
+    plan_manager.check_constraint()
     plan_manager.ant_colony()
     print('---------- Original Plan ----------')
     plan_manager.print_plan()
@@ -64,11 +65,11 @@ if __name__ == '__main__':
     old_score = plan_manager.score
 
     # ========== 使用模型丰富行程
-    if plan_manager.constraint['all-time'] < plan_manager.constraint['user-time'] and plan_manager.constraint['all-budget'] < plan_manager.constraint['user-budget']:
+    if plan_manager.constraint['all-time'] < plan_manager.constraint['user-time'] and plan_manager.constraint['all-budget'] < plan_manager.constraint['user-budget'] / 2:
         plan_manager.plan, plan_manager.constraint = predict(args, 1, plan_manager.plan, plan_manager.constraint)
-        plan_manager.improve_plan()
-        print('---------- Improved Plan ----------')
-        plan_manager.print_plan()
-        plan_manager.evaluate()
-        new_score = plan_manager.score
-        print('Improved by: %.2f%%' % ((new_score - old_score) / old_score * 100))
+    plan_manager.improve_plan()
+    print('---------- Improved Plan ----------')
+    plan_manager.print_plan()
+    plan_manager.evaluate()
+    new_score = plan_manager.score
+    print('Improved by: %.2f%%' % ((new_score - old_score) / old_score * 100))

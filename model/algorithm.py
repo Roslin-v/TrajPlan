@@ -315,6 +315,10 @@ def cal_attraction():
                 last_user_value[key] = user_value[key]
             for key in spot_visit:
                 last_spot_value[key] = spot_value[key]
+    with open('../data/interest.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        for row in spot_value.items():
+            writer.writerow(row)
     spot_id = list(spot_value.keys())
     attraction = np.zeros((len(spot_id), len(spot_id)))
     adj = np.array(nx.adjacency_matrix(G, nodelist=G.nodes()).todense())
@@ -393,6 +397,75 @@ class PlanManager:
         self.plan = {}
         self.plan_situ = {}
         self.score = 0
+
+    def knapsack(self, budgets, times, B, T):
+        # ========== 获取背包的各项初始化数据
+        nodes = self.constraint['select-spot']
+        importance = []
+        raw_int = load_matrix('../data/interest.csv')
+        interest = []
+        comment = []
+        for each in nodes:
+            interest.append(raw_int[each - 10001][1])
+            comment.append(self.spot_feat[each - 10001][4])
+        interest_min = min(interest)
+        comment_min = min(comment)
+        k1 = 30 / (max(interest) - interest_min)
+        k2 = 70 / (max(comment) - comment_min)
+        # 重要程度 = 40%景点兴趣度 + 60%评论人数
+        for i in range(len(interest)):
+            interest[i] = k1 * (interest[i] - interest_min)
+            comment[i] = k2 * (comment[i] - comment_min)
+            importance.append(interest[i] + comment[i])
+        # ========== 动态规划求解双限制（时间、预算）的0-1背包问题
+        n = len(importance)
+        dp = [[[0 for _ in range(T + 1)] for _ in range(B + 1)] for _ in range(n + 1)]
+        item_selection = [[[False for _ in range(T + 1)] for _ in range(B + 1)] for _ in range(n + 1)]
+        for i in range(1, n + 1):
+            for b in range(1, B + 1):
+                for t in range(1, T + 1):
+                    if budgets[i - 1] > b or times[i - 1] > t:
+                        dp[i][b][t] = dp[i - 1][b][t]
+                    else:
+                        not_taking_item = dp[i - 1][b][t]
+                        taking_item = dp[i - 1][int(b - budgets[i - 1])][int(t - times[i - 1])] + importance[i - 1]
+                        if taking_item > not_taking_item:
+                            dp[i][b][t] = taking_item
+                            item_selection[i][b][t] = True
+                        else:
+                            dp[i][b][t] = not_taking_item
+        # ========== 回溯找到所选择的景点
+        selected_items = []
+        b, t = B, T
+        for i in range(n, 0, -1):
+            if item_selection[i][b][t]:
+                selected_items.append(i - 1)
+                b -= budgets[i - 1]
+                t -= times[i - 1]
+        selected_items.reverse()  # 逆序以得到原始顺序
+        return selected_items
+
+    def check_constraint(self):
+        nodes = self.constraint['select-spot']
+        budgets = []
+        times = []
+        for each in nodes:
+            budgets.append(int(self.spot_feat[each - 10001][5]))
+            if self.spot_feat[each - 10001][10] in nodes:
+                times.append(0)
+            else:
+                times.append(int(self.spot_feat[each - 10001][8] + 1))   # 多加1小时，粗略算作交通和吃饭时间
+        B = int(self.constraint['user-budget'] / 2)  # 留点预算给餐厅
+        T = int(self.constraint['user-time'])
+        if T >= 24:  # 如果用户选择超过一天，一天之中最多12h可以实际游玩
+            T /= 2
+            T = int(T)
+        if sum(budgets) > B / 2 or sum(times) > T:
+            new_pois_index = self.knapsack(budgets, times, B, T)
+            new_pois = []
+            for each in new_pois_index:
+                new_pois.append(nodes[each])
+            self.constraint['select-spot'] = new_pois
 
     def ant_colony(self):
         nodes = self.constraint['select-spot']
@@ -549,7 +622,10 @@ class PlanManager:
         if plan_time > self.constraint['user-time']:
             # 先看能不能拼接已有的行程
             key1 = key2 = 0
-            for key in self.plan_situ:
+            keys = []
+            for key in self.plan_situ.keys():
+                keys.append(key)
+            for key in keys:
                 if self.plan_situ[key][0] == 1:
                     if key1 == 0:
                         key1 = key
@@ -559,29 +635,17 @@ class PlanManager:
                             for each in self.plan[key2]:
                                 each[2] += (self.plan[key1][-1][-2] - self.plan[key1][0][2] + 1)
                                 each[3] += (self.plan[key1][-1][-2] - self.plan[key1][0][2] + 1)
-                            self.plan[key1].append(self.plan[key2])
+                            self.plan[key1] += self.plan[key2]
                             self.plan_situ[key1][0] = 0
                             del self.plan[key2]
                             del self.plan_situ[key2]
-            # Todo: 根据时间删除部分行程
             # 重新计算时间
-            plan_time = (len(self.plan) - 1) * 24
-            if int(list(self.plan.items())[-1][1][-1][0] / 10000) == 1:
-                plan_time += list(self.plan.items())[-1][1][-1][-2]
-            else:
-                plan_time += list(self.plan.items())[-1][1][-2][-2]
+            plan_time = (len(self.plan) - 1) * 24 + list(self.plan.items())[-1][1][-1][-2]
         self.constraint['all-time'] = plan_time
         plan_fee = 0
         for key in self.plan:
             for each in self.plan[key]:
                 plan_fee += each[4]
-        if plan_fee > self.constraint['user-budget']:
-            # Todo: 根据预算删除部分行程
-            # 重新计算费用
-            plan_fee = 0
-            for key in self.plan:
-                for each in self.plan[key]:
-                    plan_fee += each[4]
         self.constraint['all-budget'] = plan_fee
 
     def print_plan(self):
