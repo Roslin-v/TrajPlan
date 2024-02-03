@@ -680,7 +680,7 @@ class PlanManager:
         print('Total time:\t', self.constraint['all-time'], '小时')
         print('Total fee:\t', self.constraint['all-budget'], '元')
 
-    def recommend_food(self, point1, point2, decadence):
+    def recommend_food(self, point1, point2, decadence, position=False):
         distance = []
         if point1 is not None and point2 is not None:
             line = np.linalg.norm(point1 - point2)
@@ -701,6 +701,9 @@ class PlanManager:
         cand_count = 0
         for each in sorted_id:
             satisfy = True
+            # 鼓浪屿上只能吃鼓浪屿地区的餐厅
+            if position and self.food_feat[each][10] != 10001:
+                satisfy = False
             # 考虑类型
             for c in self.constraint['lunch-no']:
                 if self.food_feat[each][4] == c:
@@ -753,7 +756,10 @@ class PlanManager:
             else:
                 point1 = np.array([self.spot_feat[p[lunch_index][0] - 10001][6], self.spot_feat[p[lunch_index][0] - 10001][7]])
             # 考虑类别，排除203冰激淋 219酒吧 220居酒屋 221咖啡店 228零食 232 233面包 250卤味 256西式快餐 257甜点 260小吃 265饮品
-            food_choose = self.recommend_food(point1, point2, (1 - (len(self.plan) - key) / len(self.plan)))
+            if self.spot_feat[p[lunch_index - 1][0] - 10001][0] == 10001 or self.spot_feat[p[lunch_index - 1][0] - 10001][10] == 10001 or self.spot_feat[p[lunch_index][0] - 10001][0] == 10001 or self.spot_feat[p[lunch_index][0] - 10001][10] == 10001:
+                food_choose = self.recommend_food(point1, point2, (1 - (len(self.plan) - key) / len(self.plan)), True)
+            else:
+                food_choose = self.recommend_food(point1, point2, (1 - (len(self.plan) - key) / len(self.plan)))
             self.constraint['select-food'].append(food_choose[0])
             # 食物: id, name, score, cat, price
             self.plan[key].insert(lunch_index, [food_choose[0], food_choose[1], food_choose[2], food_choose[5], food_choose[6]])
@@ -818,7 +824,7 @@ class PlanManager:
                 if int(each[0] / 10000) == 1:
                     cat.add(self.spot_feat[each[0]-10001][2])
                     spot_time += (each[3] - each[2])
-        self.score = 0.5 * len(cat) / 6 + 0.3 * spot_time / play_time + 0.2 * play_time / self.constraint['all-time']
+        self.score = 0.5 * len(cat) / 6 + 0.3 * spot_time / play_time + 0.2 * play_time / self.constraint['user-time'] * 2
         print('Score: %.2f' % (self.score * 100), end='')
         print('/100')
 
