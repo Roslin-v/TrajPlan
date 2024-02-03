@@ -186,17 +186,10 @@ def initiate_manager(filename):
             category = row[7]
             station_manager.add_station(station_id, station_name, longitude, latitude, line_id)
             line_manager.add_line(line_id, line_name, category, Station(station_id, station_name, longitude, latitude))
-    return station_manager, line_manager
-
-
-def get_bus_route(station_manager, line_manager, start, terminal):
+    # ========== 初始化邻接矩阵
     stations = []
     station_index = {}
-    v_matrix = []   # 邻接矩阵
-    book = []
-    dis = []
-    n = 0  # 顶点数
-    # ========== 初始化邻接矩阵
+    v_matrix = []
     index = 0
     for each in station_manager.stations.keys():
         station_index[each] = index
@@ -206,69 +199,9 @@ def get_bus_route(station_manager, line_manager, start, terminal):
         v_matrix.append([])
         for j in range(0, len(stations) - 1):
             same_lines = station_manager.get_same_lines(stations[i], stations[j])
-            v_matrix[i].append(line_manager.get_best_route(stations[i].station_id, stations[j].station_id, same_lines))
-    start_index = station_index[start]
-    terminal_index = station_index[terminal]
-    # ========== 使用Dijkstra算法计算路径
-    # 初始化dis数组
-    for i in range(0, len(v_matrix) - 1):
-        dis.append((v_matrix[start_index][i].stops, [v_matrix[start_index][i]]))
-    for i in range(0, len(v_matrix) - 1):
-        book.append(0)
-    book[0] = 1
-    n = len(stations)
-    u = 0
-    for i in range(0, n - 1):
-        min = (9999, [Route()])
-        for j in range(0, n - 1):
-            if book[j] == 0 and dis[j][0] < min[0]:
-                min = (dis[j][0], dis[j][1])
-                u = j
-        book[u] = 1
-        bias = 30
-        for v in range(0, n - 1):
-            if v_matrix[u][v].stops <= 9999:
-                if book[v] == 0 and dis[v][0] > (dis[u][0] + v_matrix[u][v].stops + bias):
-                    a = []
-                    for each in dis[u][1]:
-                        a.append(each)
-                    a.append(v_matrix[u][v])
-                    dis[v] = (dis[u][0] + v_matrix[u][v].stops, a)
-    solution = dis[terminal_index][1]
-    total_route = {}    # 以线路名称为key，途径的站点list为value的字典
-    total_time = 0
-    total_fee = 0
-    for each_route in solution:
-        # print("在 " + station_manager.get_station_name(each_route.from_stop) + " 乘坐 " + str(line_manager.get_line_name(each_route.line_number)) + "号线 到 " + station_manager.get_station_name(each_route.to_stop) + "(" + str(each_route.stops) + "站)")
-        temp_route, temp_time, temp_fee = line_manager.get_stops(each_route.line_number, each_route.from_stop, each_route.to_stop)
-        total_route[temp_route[0]] = temp_route[1:]
-        total_time += temp_time
-        total_time += 1     # 换乘增加一分钟
-        total_fee += temp_fee
-    return total_route, total_time, total_fee
-
-
-def get_other_route(lat1, long1, lat2, long2):
-    distance = geodesic((float(lat1), float(long1)), (float(lat2), float(long2))).m
-    distance *= 2
-    taxi_time = distance / 360
-    taxi_fee = 10     # 10r起步，超过3公里每公里2r
-    if distance > 3000:
-        taxi_fee += 2 * math.ceil((distance - 3000) / 1000)
-    walk_time = distance / 80
-    return taxi_time, taxi_fee, walk_time
-
-
-def get_near_station(station_manager, lat1, long1):
-    near = ''
-    min_dis = 9999
-    for key in station_manager.stations:
-        each = station_manager.stations[key]
-        cur_dis = geodesic((float(lat1), float(long1)), (float(each.latitude), float(each.longitude))).m
-        if min_dis > cur_dis:
-            min_dis = cur_dis
-            near = each.station_id
-    return near
+            v_matrix[i].append(
+                line_manager.get_best_route(stations[i].station_id, stations[j].station_id, same_lines))
+    return station_manager, line_manager, stations, station_index, v_matrix
 
 
 def cal_attraction():
@@ -387,15 +320,18 @@ class PlanManager:
         self.all_cost = get_cost()      # 各个景点之间的转移代价
         self.plan = {}                  # 计划 {day1: [poi_id, poi_name, ...]}
         self.plan_situ = {}             # 计划情况 {day1: [是否需要补充行程, [已有poi]]}
+        self.trans = {'bus': [], 'taxi': [], 'walk': []}
         self.score = 0
         self.spot_feat = load_poi_features('../data/spot.csv')
         self.food_feat = load_poi_features('../data/food.csv')
+        self.station_manager, self.line_manager, self.stations, self.station_index, self.v_matrix = initiate_manager('../data/transportation.csv')
 
     def reinitial(self, constraint):
         # 清空原来的计划
         self.constraint = constraint
         self.plan = {}
         self.plan_situ = {}
+        self.trans = {'bus': [], 'taxi': [], 'walk': []}
         self.score = 0
 
     def knapsack(self, budgets, times, B, T):
@@ -809,6 +745,157 @@ class PlanManager:
                 plan_fee += each[4]
         self.constraint['all-budget'] = plan_fee
 
+    def get_bus_route(self, start, terminal):
+        book = []
+        dis = []
+        start_index = self.station_index[start]
+        terminal_index = self.station_index[terminal]
+        # ========== 使用Dijkstra算法计算路径
+        # 初始化dis数组
+        for i in range(0, len(self.v_matrix) - 1):
+            dis.append((self.v_matrix[start_index][i].stops, [self.v_matrix[start_index][i]]))
+        for i in range(0, len(self.v_matrix) - 1):
+            book.append(0)
+        book[0] = 1
+        n = len(self.stations)
+        u = 0
+        for i in range(0, n - 1):
+            min = (9999, [Route()])
+            for j in range(0, n - 1):
+                if book[j] == 0 and dis[j][0] < min[0]:
+                    min = (dis[j][0], dis[j][1])
+                    u = j
+            book[u] = 1
+            bias = 30   # 换乘的代价（倾向于少换乘）
+            for v in range(0, n - 1):
+                if self.v_matrix[u][v].stops <= 9999:
+                    if book[v] == 0 and dis[v][0] > (dis[u][0] + self.v_matrix[u][v].stops + bias):
+                        a = []
+                        for each in dis[u][1]:
+                            a.append(each)
+                        a.append(self.v_matrix[u][v])
+                        dis[v] = (dis[u][0] + self.v_matrix[u][v].stops, a)
+        solution = dis[terminal_index][1]
+        total_route = {}  # 以线路名称为key，途径的站点list为value的字典
+        total_time = 0
+        total_fee = 0
+        for each_route in solution:
+            temp_route, temp_time, temp_fee = self.line_manager.get_stops(each_route.line_number, each_route.from_stop,
+                                                                     each_route.to_stop)
+            total_route[temp_route[0]] = temp_route[1:]
+            total_time += temp_time
+            total_time += 1  # 换乘增加一分钟
+            total_fee += temp_fee
+        return total_route, total_time, total_fee
+
+    def get_other_route(self, lat1, long1, lat2, long2):
+        distance = geodesic((float(lat1), float(long1)), (float(lat2), float(long2))).m
+        distance *= 2
+        taxi_time = distance / 360
+        taxi_fee = 10  # 10r起步，超过3公里每公里2r
+        if distance > 3000:
+            taxi_fee += 2 * math.ceil((distance - 3000) / 1000)
+        walk_time = distance / 80
+        return taxi_time, taxi_fee, walk_time
+
+    def get_near_station(self, lat1, long1, boat=False):
+        near = ''
+        min_dis = 9999
+        for key in self.station_manager.stations:
+            each = self.station_manager.stations[key]
+            # 鼓浪屿的三个码头
+            if boat and each.station_id != '32846' and each.station_id != '33579' and each.station_id != '33649':
+                continue
+            # 0.01纬度≈1.11km，限制一下范围，提高效率
+            if abs(float(lat1) - float(each.latitude)) <= 0.01 and abs(float(long1) - float(each.longitude)) <= 0.01:
+                cur_dis = geodesic((float(lat1), float(long1)), (float(each.latitude), float(each.longitude))).m
+                if min_dis > cur_dis:
+                    min_dis = cur_dis
+                    near = each.station_id
+        return near
+
+    def get_trans(self):
+        for key in self.plan:
+            p = self.plan[key]
+            s_lat = self.spot_feat[p[0][0]-10001][6]
+            s_long = self.spot_feat[p[0][0]-10001][7]
+            s_boat = False
+            if p[0][0] == 10001 or self.spot_feat[p[0][0]-10001][10] == 10001:
+                s_boat = True
+            for i in range(1, len(p)):
+                if int(p[i][0] / 10000) == 1:
+                    t_lat = self.spot_feat[p[i][0]-10001][6]
+                    t_long = self.spot_feat[p[i][0]-10001][7]
+                    t_boat = False
+                    if p[i][0] == 10001 or self.spot_feat[p[i][0] - 10001][10] == 10001:
+                        t_boat = True
+                    # 获取打的和步行的路线
+                    taxi_time, taxi_fee, walk_time = self.get_other_route(s_lat, s_long, t_lat, t_long)
+                    self.trans['taxi'].append([taxi_time, taxi_fee])
+                    self.trans['walk'].append(walk_time)
+                    if walk_time <= 15:
+                        self.trans['bus'].append([0, 0, 0])
+                        s_lat = t_lat
+                        s_long = t_long
+                        s_boat = t_boat
+                        continue
+                    # 获取公共交通路线（含换乘）
+                    start = self.get_near_station(s_lat, s_long, s_boat)
+                    terminal = self.get_near_station(t_lat, t_long, t_boat)
+                    # Todo: 改进公交换乘算法，可以公交+步行
+                    if s_boat and p[i][0] == 10009:
+                        bus_route, bus_time, bus_fee = self.get_bus_route(start, '33949')
+                        bus_route['步行'] = ['轮渡码头', '中山路']
+                        bus_time += geodesic((24.46069, 118.0798), (24.460219, 118.08563)).m * 2 / 80
+                    else:
+                        bus_route, bus_time, bus_fee = self.get_bus_route(start, terminal)
+                    self.trans['bus'].append([bus_route, bus_time, bus_fee])
+                    s_lat = t_lat
+                    s_long = t_long
+                    s_boat = t_boat
+
+    def print_trans(self):
+        for key in self.plan:
+            print('>>> Day', key)
+            p = self.plan[key]
+            start = p[0]
+            index = 0
+            for each in p[1:]:
+                if int(each[0] / 10000) == 1:
+                    terminal = each
+                    print('From', start[1], 'to', terminal[1], 'you can', end=' ')
+                    bus_time = self.trans['bus'][index][1]
+                    taxi_time = self.trans['taxi'][index][0]
+                    walk_time = self.trans['walk'][index]
+                    # 走路很近
+                    if walk_time <= 15:
+                        print('walk')
+                        print('Estimated total time:', walk_time, 'min')
+                    # 用户倾向于公共交通，并且公共交通更方便，或者要往返鼓浪屿
+                    elif (start[0] == 10001 or self.spot_feat[start[0]-10001][10] == 10001 or terminal[0] == 10001 or self.spot_feat[terminal[0]-10001][10] == 10001) or (self.constraint['prefer-trans'] == 0 and bus_time <= 2 * taxi_time):
+                        print('take bus')
+                        bus_route = self.trans['bus'][index][0]
+                        bus_fee = self.trans['bus'][index][2]
+                        for b in bus_route:
+                            if b == '步行':
+                                print('You can walk from', bus_route[b][0], 'to', bus_route[b][1])
+                                continue
+                            print('From', bus_route[b][0], 'take', b, 'to', bus_route[b][len(bus_route[b]) - 1])
+                            for i in range(len(bus_route[b]) - 1):
+                                print(bus_route[b][i], ' > ', end='')
+                            print(bus_route[b][len(bus_route[b]) - 1])
+                        print('Estimated total time:', bus_time, 'min')
+                        print('Estimated total fee:', bus_fee, 'rmb')
+                    # 用户倾向于打的，或者打的更方便
+                    else:
+                        taxi_fee = self.trans['taxi'][index][1]
+                        print('take taxi')
+                        print('Estimated total time:', taxi_time, 'min')
+                        print('Estimated total fee:', taxi_fee, 'rmb')
+                    print('-----')
+                    start = terminal
+                    index += 1
+
     # 根据POI种类丰富度和行程时间安排评估行程分数
     def evaluate(self):
         cat = set()
@@ -869,12 +956,23 @@ if __name__ == '__main__':
     print_plan(plan)
     score = evaluate(plan)
     '''
-    plan = {
-        1: [[10041, '厦门大学', 9, 11, 0.0], [10003, '厦门园林植物园', 11.5, 16.5, 30.0], [10007, '曾厝垵', 17.5, 20.5, 0.0]],
-        2: [[10006, '环岛路', 9, 14.0, 0.0], [10080, '演武大桥观景平台', 15.0, 16.0, 0.0], [10010, '云上厦门观光厅', 17.0, 18.0, 158.0],
-            [10015, '白城沙滩', 19.0, 21.0, 0.0]],
-        3: [[10001, '鼓浪屿', 9, 16.0, 0.0], [10008, '厦门海底世界', 9, 12.0, 107.0], [10005, '日光岩', 12.0, 14.0, 50.0],
-            [10009, '中山路步行街', 16.5, 19.5, 0.0]],
-        4: [[10036, '海湾公园', 9, 11.0, 0.0], [10075, '闽南古镇', 12.0, 14.0, 0.0], [10002, '胡里山炮台', 15.0, 17.0, 23.0],
-            [10018, '台湾小吃街', 18.0, 20.0, 0.0]]}
+    plan = {1: [[10001, '鼓浪屿', 9, 16.0, 0.0], [10008, '厦门海底世界', 9, 12.0, 107.0],
+                [21160, '那私厨｜红砖老别墅餐厅(鼓浪屿店)', 4.9, '闽菜', 100], [10005, '日光岩', 13.0, 15.0, 50.0],
+                [10009, '中山路步行街', 17.5, 20.5, 0.0], [21407, '醉得意(厦禾店)', 4.8, '其他', 55]],
+            2: [[10041, '厦门大学', 9, 11.0, 0.0], [21192, '金家港海鲜大排档(中山路店)', 4.9, '海鲜', 145],
+                [10007, '曾厝垵', 12.5, 15.5, 0.0], [10002, '胡里山炮台', 16.0, 18.0, 23.0],
+                [21887, '上青本港海鲜(后江埭路店)', 4.7, '海鲜', 204], [10115, '白鹭洲公园', 20.0, 22.0, 0.0]]}
+    constraint = {'user-time': 48,
+                  'user-budget': 1000,
+                  'all-time': 0,
+                  'all-budget': 0,
+                  'prefer-trans': 0,
+                  'select-spot': [10001, 10002, 10003, 10005, 10006, 10007, 10008, 10009, 10041],
+                  'select-food': [],
+                  'lunch-no': [203, 219, 220, 221, 228, 232, 233, 250, 256, 257, 260, 265],
+                  'dinner-no': [203, 221, 228, 232, 233, 250, 256, 257, 260, 265]}
+    plan_manager = PlanManager(constraint)
+    plan_manager.plan = plan
+    plan_manager.get_trans()
+    plan_manager.print_trans()
 

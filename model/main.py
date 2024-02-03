@@ -73,3 +73,8 @@ if __name__ == '__main__':
     plan_manager.evaluate()
     new_score = plan_manager.score
     print('Improved by: %.2f%%' % ((new_score - old_score) / old_score * 100))
+
+    # ========== 获取交通方式并打印
+    print('---------- Transportation Suggestions ----------')
+    plan_manager.get_trans()
+    plan_manager.print_trans()
