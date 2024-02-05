@@ -1,207 +1,10 @@
 import csv
-
+import json
 import numpy as np
+import requests
 from geopy.distance import geodesic
 import math
 from data_process import *
-
-
-class Line:
-    def __init__(self, line_id, line_name, category):
-        self.line_id = line_id
-        self.line_name = line_name
-        self.category = category
-        self.station_ids = []
-        self.stations = {}
-
-    def add_station(self, station):
-        self.station_ids.append(station.station_id)
-        self.stations[station.station_id] = station
-
-
-class LineManager:
-    def __init__(self):
-        self.lines = {}
-
-    def add_line(self, line_id, line_name, category, station):
-        if line_id in self.lines:
-            self.lines[line_id].add_station(station)
-        else:
-            line = Line(line_id, line_name, category)
-            line.add_station(station)
-            self.lines[line_id] = line
-
-    def get_best_route(self, from_station, to_station, lines):
-        route = Route()
-        route.from_stop = from_station
-        route.to_stop = to_station
-        route.stops = 9999
-        if len(lines) == 0:
-            route.stops = 9999
-            return route
-        else:
-            for each_line in lines:
-                line = self.lines[each_line]
-                start_index = 0
-                stop_index = 0
-                for i in range(0, len(line.station_ids)):
-                    if line.station_ids[i] == from_station:
-                        start_index = i
-                    elif line.station_ids[i] == to_station:
-                        stop_index = i
-                stops = abs(start_index - stop_index)
-                if stops < route.stops:
-                    route.stops = stops
-                    route.line_number = line.line_id
-        return route
-
-    def get_stops(self, line_id, from_stop, to_stop):
-        line = self.lines[line_id]
-        cat = line.category
-        total_time = 0  # 公共交通总时间 min
-        speed = 0  # 交通工具的速度 m/min  1km/h=16.7m/min
-        fee = 0
-        if cat == '301' or cat == '304':  # 公交
-            speed = 30 * 16.7
-            fee = 2
-        elif cat == '302':  # BRT
-            speed = 40 * 16.7
-            fee = 3
-        elif cat == '303':  # 轮船，默认一趟15min
-            total_time = 15
-            fee = 35
-        elif cat == '305':  # 地铁
-            speed = 50 * 16.7
-            fee = 4
-        start_index = 0
-        end_index = 0
-        for i in range(0, len(line.station_ids) - 1):
-            if line.station_ids[i] == from_stop:
-                start_index = i
-            elif line.station_ids[i] == to_stop:
-                end_index = i
-        sign = 1
-        if start_index > end_index:
-            sign = -1
-        last_station = line.stations[from_stop]
-        temp_list = list(enumerate(line.stations))
-        line_route = [line.line_name]
-        for i in range(abs(start_index-end_index+1)):
-            cur_station = line.stations[temp_list[start_index+i*sign][1]]
-            line_route.append(cur_station.station_name)
-            if cur_station.station_id == last_station.station_id:
-                continue
-            else:
-                distance = geodesic((last_station.latitude, last_station.longitude), (cur_station.latitude, cur_station.longitude)).m
-                if speed != 0:
-                    total_time += distance / speed
-                # print(distance)
-            last_station = cur_station
-        return line_route, total_time, fee
-
-    def get_line_name(self, line_id):
-        if line_id in self.lines:
-            return self.lines[line_id].line_name
-        else:
-            return None
-
-    def print_all_dis(self):
-        for key in self.lines:
-            each = self.lines[key]
-            print(each.line_name)
-            last = each.stations[each.station_ids[0]]
-            for key2 in each.stations:
-                cur = each.stations[key2]
-                if last == cur:
-                    continue
-                else:
-                    distance = geodesic((last.latitude, last.longitude), (cur.latitude, cur.longitude)).km
-                    with open('../data/test3.csv', 'a', newline='', encoding='utf-8-sig') as csvfile:
-                        writer = csv.writer(csvfile)
-                        writer.writerow([last.station_id, last.station_name, cur.station_id, cur.station_name, distance])
-                last = cur
-
-
-class Station:
-    def __init__(self, station_id, station_name, longitude, latitude):
-        self.station_id = station_id
-        self.station_name = station_name
-        self.longitude = longitude
-        self.latitude = latitude
-        self.lines = []
-
-    def add_line(self, line_id):
-        self.lines.append(line_id)
-
-
-class StationManager:
-    def __init__(self):
-        self.stations = {}
-        self.station_ids = set()
-
-    def add_station(self, station_id, station_name, longitude, latitude, line_id):
-        self.station_ids.add(station_id)
-        if station_id in self.stations:
-            self.stations[station_id].add_line(line_id)
-        else:
-            station = Station(station_id, station_name, longitude, latitude)
-            station.add_line(line_id)
-            self.stations[station_id] = station
-
-    def get_same_lines(self, from_station, to_station):
-        line_numbers = []
-        for each_line in from_station.lines:
-            if each_line in to_station.lines:
-                line_numbers.append(each_line)
-        return line_numbers
-
-    def get_station_name(self, station_id):
-        if station_id in self.station_ids:
-            return self.stations[station_id].station_name
-        else:
-            return None
-
-
-class Route:
-    from_stop = ""
-    to_stop = ""
-    line_number = 0
-    stops = 9999
-
-
-def initiate_manager(filename):
-    station_manager = StationManager()
-    line_manager = LineManager()
-    with open(filename) as file:
-        csv_reader = csv.reader(file)
-        next(csv_reader)    # 跳过表头
-        for row in csv_reader:
-            line_id = row[0]
-            line_name = row[1]
-            longitude = row[2]
-            latitude = row[3]
-            # seq = row[4] 不需要了，因为csv默认按照站点顺序排的
-            station_id = row[5]
-            station_name = row[6]
-            category = row[7]
-            station_manager.add_station(station_id, station_name, longitude, latitude, line_id)
-            line_manager.add_line(line_id, line_name, category, Station(station_id, station_name, longitude, latitude))
-    # ========== 初始化邻接矩阵
-    stations = []
-    station_index = {}
-    v_matrix = []
-    index = 0
-    for each in station_manager.stations.keys():
-        station_index[each] = index
-        index += 1
-        stations.append(station_manager.stations[each])
-    for i in range(0, len(stations)):
-        v_matrix.append([])
-        for j in range(0, len(stations) - 1):
-            same_lines = station_manager.get_same_lines(stations[i], stations[j])
-            v_matrix[i].append(
-                line_manager.get_best_route(stations[i].station_id, stations[j].station_id, same_lines))
-    return station_manager, line_manager, stations, station_index, v_matrix
 
 
 def cal_attraction():
@@ -324,7 +127,6 @@ class PlanManager:
         self.score = 0
         self.spot_feat = load_poi_features('../data/spot.csv')
         self.food_feat = load_poi_features('../data/food.csv')
-        self.station_manager, self.line_manager, self.stations, self.station_index, self.v_matrix = initiate_manager('../data/transportation.csv')
 
     def reinitial(self, constraint):
         # 清空原来的计划
@@ -745,75 +547,6 @@ class PlanManager:
                 plan_fee += each[4]
         self.constraint['all-budget'] = plan_fee
 
-    def get_bus_route(self, start, terminal):
-        book = []
-        dis = []
-        start_index = self.station_index[start]
-        terminal_index = self.station_index[terminal]
-        # ========== 使用Dijkstra算法计算路径
-        # 初始化dis数组
-        for i in range(0, len(self.v_matrix) - 1):
-            dis.append((self.v_matrix[start_index][i].stops, [self.v_matrix[start_index][i]]))
-        for i in range(0, len(self.v_matrix) - 1):
-            book.append(0)
-        book[0] = 1
-        n = len(self.stations)
-        u = 0
-        for i in range(0, n - 1):
-            min = (9999, [Route()])
-            for j in range(0, n - 1):
-                if book[j] == 0 and dis[j][0] < min[0]:
-                    min = (dis[j][0], dis[j][1])
-                    u = j
-            book[u] = 1
-            bias = 30   # 换乘的代价（倾向于少换乘）
-            for v in range(0, n - 1):
-                if self.v_matrix[u][v].stops <= 9999:
-                    if book[v] == 0 and dis[v][0] > (dis[u][0] + self.v_matrix[u][v].stops + bias):
-                        a = []
-                        for each in dis[u][1]:
-                            a.append(each)
-                        a.append(self.v_matrix[u][v])
-                        dis[v] = (dis[u][0] + self.v_matrix[u][v].stops, a)
-        solution = dis[terminal_index][1]
-        total_route = {}  # 以线路名称为key，途径的站点list为value的字典
-        total_time = 0
-        total_fee = 0
-        for each_route in solution:
-            temp_route, temp_time, temp_fee = self.line_manager.get_stops(each_route.line_number, each_route.from_stop,
-                                                                     each_route.to_stop)
-            total_route[temp_route[0]] = temp_route[1:]
-            total_time += temp_time
-            total_time += 1  # 换乘增加一分钟
-            total_fee += temp_fee
-        return total_route, total_time, total_fee
-
-    def get_other_route(self, lat1, long1, lat2, long2):
-        distance = geodesic((float(lat1), float(long1)), (float(lat2), float(long2))).m
-        distance *= 2
-        taxi_time = distance / 360
-        taxi_fee = 10  # 10r起步，超过3公里每公里2r
-        if distance > 3000:
-            taxi_fee += 2 * math.ceil((distance - 3000) / 1000)
-        walk_time = distance / 80
-        return taxi_time, taxi_fee, walk_time
-
-    def get_near_station(self, lat1, long1, boat=False):
-        near = ''
-        min_dis = 9999
-        for key in self.station_manager.stations:
-            each = self.station_manager.stations[key]
-            # 鼓浪屿的三个码头
-            if boat and each.station_id != '32846' and each.station_id != '33579' and each.station_id != '33649':
-                continue
-            # 0.01纬度≈1.11km，限制一下范围，提高效率
-            if abs(float(lat1) - float(each.latitude)) <= 0.01 and abs(float(long1) - float(each.longitude)) <= 0.01:
-                cur_dis = geodesic((float(lat1), float(long1)), (float(each.latitude), float(each.longitude))).m
-                if min_dis > cur_dis:
-                    min_dis = cur_dis
-                    near = each.station_id
-        return near
-
     def get_trans(self):
         for key in self.plan:
             p = self.plan[key]
@@ -829,69 +562,98 @@ class PlanManager:
                     t_boat = False
                     if p[i][0] == 10001 or self.spot_feat[p[i][0] - 10001][10] == 10001:
                         t_boat = True
-                    # 获取打的和步行的路线
-                    taxi_time, taxi_fee, walk_time = self.get_other_route(s_lat, s_long, t_lat, t_long)
-                    self.trans['taxi'].append([taxi_time, taxi_fee])
-                    self.trans['walk'].append(walk_time)
-                    if walk_time <= 15:
-                        self.trans['bus'].append([0, 0, 0])
+                    user_key = '5d5ca7f300800fb6dbefd46be33986ea'
+                    origin = str(s_long) + ',' + str(s_lat)
+                    destination = str(t_long) + ',' + str(t_lat)
+                    output = 'json'
+                    city = '0592'
+                    # 获取步行方案
+                    url = f'https://restapi.amap.com/v5/direction/walking?key={user_key}&origin={origin}&destination={destination}&output={output}&city={city}'
+                    walk_txt = json.loads(requests.get(url).text)
+                    self.trans['walk'].append([int(walk_txt['route']['paths'][0]['distance']), int(walk_txt['route']['paths'][0]['cost']['duration'])/60])
+                    if (s_boat and t_boat) or int(walk_txt['route']['paths'][0]['cost']['duration'])/60 <= 15:
+                        self.trans['taxi'].append([0, 0, 0])
+                        self.trans['bus'].append([])
                         s_lat = t_lat
                         s_long = t_long
                         s_boat = t_boat
                         continue
-                    # 获取公共交通路线（含换乘）
-                    start = self.get_near_station(s_lat, s_long, s_boat)
-                    terminal = self.get_near_station(t_lat, t_long, t_boat)
-                    # Todo: 改进公交换乘算法，可以公交+步行
-                    if s_boat and p[i][0] == 10009:
-                        bus_route, bus_time, bus_fee = self.get_bus_route(start, '33949')
-                        bus_route['步行'] = ['轮渡码头', '中山路']
-                        bus_time += geodesic((24.46069, 118.0798), (24.460219, 118.08563)).m * 2 / 80
+                    # 获取打车方案
+                    url = f'https://restapi.amap.com/v5/direction/driving?key={user_key}&origin={origin}&destination={destination}&output={output}&city={city}'
+                    taxi_txt = json.loads(requests.get(url).text)
+                    self.trans['taxi'].append([int(taxi_txt['route']['paths'][0]['distance']), int(taxi_txt['route']['paths'][0]['distance'])/360, int(taxi_txt['route']['taxi_cost'])])
+                    # 获取公交方案
+                    url = f'https://restapi.amap.com/v5/direction/transit/integrated?key={user_key}&origin={origin}&destination={destination}&output={output}&city1={city}&city2={city}'
+                    bus_txt = json.loads(requests.get(url).text)
+                    if len(bus_txt['route']['transits']) != 0:
+                        self.trans['bus'].append(bus_txt['route']['transits'][0]['segments'])
                     else:
-                        bus_route, bus_time, bus_fee = self.get_bus_route(start, terminal)
-                    self.trans['bus'].append([bus_route, bus_time, bus_fee])
+                        self.trans['bus'].append([])
                     s_lat = t_lat
                     s_long = t_long
                     s_boat = t_boat
 
     def print_trans(self):
+        index = 0
         for key in self.plan:
             print('>>> Day', key)
             p = self.plan[key]
             start = p[0]
-            index = 0
+            # walk: [distance, time]
+            # taxi: [distance, time, cost]
+            # bus: [{'walking':{}, 'bus': {}}]
             for each in p[1:]:
                 if int(each[0] / 10000) == 1:
                     terminal = each
-                    print('From', start[1], 'to', terminal[1], 'you can', end=' ')
-                    bus_time = self.trans['bus'][index][1]
-                    taxi_time = self.trans['taxi'][index][0]
-                    walk_time = self.trans['walk'][index]
-                    # 走路很近
-                    if walk_time <= 15:
-                        print('walk')
-                        print('Estimated total time:', walk_time, 'min')
+                    print('From', start[1], 'to', terminal[1])
+                    walk_time = self.trans['walk'][index][1]
+                    # 走路很近，或者起点终点都在岛上
+                    if walk_time <= 15 or ((start[0] == 10001 or self.spot_feat[start[0]-10001][10] == 10001) and (terminal[0] == 10001 or self.spot_feat[terminal[0]-10001][10] == 10001)):
+                        walk_dis = self.trans['walk'][index][0]
+                        if walk_dis > 1000:
+                            print('Walk %.2f km for' % (walk_dis / 1000), int(walk_time), 'min')
+                        else:
+                            print('Walk', walk_dis, 'm for', int(walk_time), 'min')
                     # 用户倾向于公共交通，并且公共交通更方便，或者要往返鼓浪屿
-                    elif (start[0] == 10001 or self.spot_feat[start[0]-10001][10] == 10001 or terminal[0] == 10001 or self.spot_feat[terminal[0]-10001][10] == 10001) or (self.constraint['prefer-trans'] == 0 and bus_time <= 2 * taxi_time):
-                        print('take bus')
-                        bus_route = self.trans['bus'][index][0]
-                        bus_fee = self.trans['bus'][index][2]
-                        for b in bus_route:
-                            if b == '步行':
-                                print('You can walk from', bus_route[b][0], 'to', bus_route[b][1])
-                                continue
-                            print('From', bus_route[b][0], 'take', b, 'to', bus_route[b][len(bus_route[b]) - 1])
-                            for i in range(len(bus_route[b]) - 1):
-                                print(bus_route[b][i], ' > ', end='')
-                            print(bus_route[b][len(bus_route[b]) - 1])
-                        print('Estimated total time:', bus_time, 'min')
-                        print('Estimated total fee:', bus_fee, 'rmb')
+                    elif len(self.trans['bus'][index]) != 0 and ((start[0] == 10001 or self.spot_feat[start[0]-10001][10] == 10001 or terminal[0] == 10001 or self.spot_feat[terminal[0]-10001][10] == 10001) or self.constraint['prefer-trans'] == 0):
+                        for seg in self.trans['bus'][index]:
+                            if 'walking' in seg:
+                                temp_dis = int(seg['walking']['distance'])
+                                if temp_dis > 1000:
+                                    print('Walk %.2f km for' % (temp_dis / 1000), int(temp_dis / 75), 'min')
+                                else:
+                                    print('Walk', temp_dis, 'm for', int(temp_dis / 75), 'min')
+                            if 'bus' in seg:
+                                busline = seg['bus']['buslines'][0]
+                                print('From', busline['departure_stop']['name'], 'take', busline['name'], 'to', busline['arrival_stop']['name'])
+                                via_stops = busline['via_stops']
+                                if len(via_stops) != 0:
+                                    for i in range(len(via_stops) - 1):
+                                        print(via_stops[i]['name'], '>', end=' ')
+                                    print(via_stops[-1]['name'])
+                                bus_type = busline['type']
+                                temp_dis = int(busline['distance'])
+                                speed = 1
+                                if bus_type == '普通公交线路':
+                                    speed = 30 * 16.7
+                                elif bus_type == 'BRT':
+                                    speed = 40 * 16.7
+                                elif bus_type == '地铁':
+                                    speed = 50 * 16.7
+                                if bus_type == '轮渡':
+                                    print('Estimated time: 15 min')
+                                else:
+                                    print('Estimated time:', int(temp_dis / speed), 'min')
                     # 用户倾向于打的，或者打的更方便
                     else:
-                        taxi_fee = self.trans['taxi'][index][1]
-                        print('take taxi')
-                        print('Estimated total time:', taxi_time, 'min')
-                        print('Estimated total fee:', taxi_fee, 'rmb')
+                        print('Take taxi for', end=' ')
+                        taxi_dis = self.trans['taxi'][index][0]
+                        if taxi_dis > 1000:
+                            print('%.2f km' % (taxi_dis / 1000))
+                        else:
+                            print(taxi_dis, 'm')
+                        print('Estimated total time:', self.trans['taxi'][index][1], 'min')
+                        print('Estimated total fee:', self.trans['taxi'][index][2], 'rmb')
                     print('-----')
                     start = terminal
                     index += 1
