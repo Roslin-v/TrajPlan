@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+    <meta charset="utf-8" />
+    <meta name="description" content="Travel Plan - Login"/>
+    <meta name="keywords"
+        content="travel agency, travel adventures, wanderlust, tourism, agency, vacation planning, trip, journey, exploration, voyage, getaway, adventure, travel guide, holiday destinations"/>
+    <meta name="author" content="BoomDevs" />
+
+    <title>鼓浪听涛-登录</title>
+    <link rel="icon" type="image/png" href="/assets/images/logo/favicon.png"/>
+    <link rel="apple-touch-icon" href="/assets/images/logo/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon" sizes="57x57" href="/assets/images/logo/apple-touch-icon-57x57.png"/>
+    <link rel="apple-touch-icon" sizes="72x72" href="/assets/images/logo/apple-touch-icon-72x72.png"/>
+    <link rel="apple-touch-icon" sizes="76x76" href="/assets/images/logo/apple-touch-icon-76x76.png"/>
+    <link rel="apple-touch-icon" sizes="114x114" href="/assets/images/logo/apple-touch-icon-114x114.png"/>
+    <link rel="apple-touch-icon" sizes="120x120" href="/assets/images/logo/apple-touch-icon-120x120.png"/>
+    <link rel="apple-touch-icon" sizes="144x144" href="/assets/images/logo/apple-touch-icon-144x144.png"/>
+    <link rel="apple-touch-icon" sizes="152x152" href="/assets/images/logo/apple-touch-icon-152x152.png"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/logo/apple-touch-icon-180x180.png"/>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fasthand&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- <link rel="stylesheet" href="/assets/vendor/select2/dist//assets/css/select2.min.css"/> -->
+
+    <link rel="stylesheet" href="/assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/assets/css/fontawesome.min.css" />
+    <link rel="stylesheet" href="/assets/css/magnific-popup.css" />
+    <link rel="stylesheet" href="/assets/css/slick.css" />
+    <link rel="stylesheet" href="/assets/css/meanmenu.css" />
+    <link rel="stylesheet" href="/assets/css/nice-select.css" />
+    <link rel="stylesheet" href="/assets/css/animate.css" />
+    <link rel="stylesheet" href="/assets/css/style.css" />
+
+    <link rel="stylesheet" type="text/css" href="/assets/css/sweetalert.css">
+    <script type="text/javascript" src="/assets/js/sweetalert-dev.js"></script>
+    <script src="/assets/js/jquery.min.js"></script>
+    <script src="/assets/js/bootstrap.min.js"></script>
+    <script src="/assets/js/jquery.nice-select.min.js"></script>
+    <script src="/assets/js/slick.min.js"></script>
+    <script src="/assets/js/jquery.counterup.min.js"></script>
+    <script src="/assets/js/waypoints.js"></script>
+    <script src="/assets/js/jquery.meanmenu.min.js"></script>
+    <script src="/assets/js/jquery.magnific-popup.min.js"></script>
+    <script src="/assets/js/inview.min.js"></script>
+    <script src="/assets/js/wow.js"></script>
+    <script src="/assets/js/tilt.jquery.js"></script>
+    <script src="/assets/js/isotope.min.js"></script>
+    <script src="/assets/js/jquery.imagesloaded.min.js"></script>
+    <script src="/assets/js/select2.min.js"></script>
+    <script src="/assets/js/jquery-ui.min.js"></script>
+    <script src="/assets/js/custom.js"></script>
+
+    <script>
+        $(document).ready(function(){
+            {% if code == 200010 %}
+            swal('登录失败', '用户名或密码不正确', 'error');
+            {% endif %}
+        });
+    </script>
+</head>
+<body>
+    <!-- Preloader Start !-->
+    <div id="preloader">
+        <div id="preloader-status">
+            <img src="/assets/images/preloader.gif" alt="Preloader">
+        </div>
+    </div>
+    <!-- Preloader End !-->
+
+    <!-- Header Start !-->
+    <header class="header-area style-1">
+        <!-- Header Nav Menu Start -->
+        <div class="header-menu-area sticky-header">
+            <div class="container">
+                <div class="row">
+                    <div class="col-xl-2 col-lg-2 col-md-6 col-6 d-flex align-items-center">
+                        <div class="logo">
+                            <a href="index.html" class="standard-logo"><img src="/assets/images/logo/nav-logo.png" alt="logo"/></a>
+                            <a href="index.html" class="sticky-logo"><img src="/assets/images/logo/nav-logo.png" alt="logo"/></a>
+                            <a href="index.html" class="retina-logo"><img src="/assets/images/logo/nav-logo.png" alt="logo"/></a>
+                        </div>
+                    </div>
+                    <div class="col-xl-10 col-lg-10 col-md-6 col-6 d-flex align-items-center justify-content-end">
+                        <div class="menu d-inline-block">
+                            <nav id="main-menu" class="main-menu">
+                                <ul>
+                                    <li><a href="../index">主页</a></li>
+                                    <li class="dropdown">
+                                        <a href="../tour">旅游资讯</a>
+                                        <ul class="submenu">
+                                            <li><a href="../spot">景点</a></li>
+                                            <li><a href="../food">美食</a></li>
+                                            <li><a href="../transportation">交通</a></li>
+                                        </ul>
+                                    </li>
+                                    <li><a href="../suggestion">旅游攻略</a></li>
+                                    <li><a href="../plan">定制行程</a></li>
+                                    <li><a href="../about">关于</a></li>
+                                    <li><a href="../login"><button class="theme-btn">登录</button></a></li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Header Nav Menu End -->
+    </header>
+    <!-- Header End !-->
+
+    <!-- Login Start!-->
+    <div class="contact-form-area">
+        <div class="container">
+            <div align="center">
+                <div class="comment-respond">
+                    <h3 style="margin-down: 25px;">用户登录</h3>
+                    <form action="#" method="post" class="comment-form">
+                        {% csrf_token %}
+                        <div class="row g-4">
+                            <div class="contacts-email">
+                                {{ data.email.label_tag }}
+                                {{ data.email }}
+                            </div>
+                            <div class="contacts-phone">
+                                {{ data.passwd.label_tag }}
+                                {{ data.passwd }}
+                            </div>
+                            <div class="col-12" align="center">
+                                <button class="theme-btn" type="submit">登录</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Login End!-->
+
+
+</body>
+</html>
