@@ -107,8 +107,13 @@
                                     <li><a href="../suggestion">旅游攻略</a></li>
                                     <li><a href="../plan">定制行程</a></li>
                                     <li><a href="../about">关于</a></li>
-                                    {% if data %}
-                                    <li><button class="theme-btn">Hello, {{ data }}</button></li>
+                                    {% if request.session.is_login %}
+                                    <li class="dropdown">
+                                        <button class="theme-btn">Hello, {{ request.session.user_name }}</button>
+                                        <ul class="submenu">
+                                            <li><a href="../logout">退出登录</a></li>
+                                        </ul>
+                                    </li>
                                     {% else %}
                                     <li><a href="../login"><button class="theme-btn">登录</button></a></li>
                                     {% endif %}

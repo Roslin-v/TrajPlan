@@ -8,7 +8,7 @@
         content="travel agency, travel adventures, wanderlust, tourism, agency, vacation planning, trip, journey, exploration, voyage, getaway, adventure, travel guide, holiday destinations"/>
     <meta name="author" content="BoomDevs" />
 
-    <title>鼓浪听涛-登录</title>
+    <title>鼓浪听涛-注册</title>
     <link rel="icon" type="image/png" href="/assets/images/logo/favicon.png"/>
     <link rel="apple-touch-icon" href="/assets/images/logo/apple-touch-icon.png"/>
     <link rel="apple-touch-icon" sizes="57x57" href="/assets/images/logo/apple-touch-icon-57x57.png"/>
@@ -55,10 +55,8 @@
 
     <script>
         $(document).ready(function(){
-            {% if code == 200010 %}
-            swal('登录失败', '用户名或密码不正确', 'error');
-            {% elif code == 200021 %}
-            swal('注册成功', '马上登录吧！', 'success');
+            {% if code == 200020 %}
+            swal('注册失败', '邮箱已注册或信息不符合要求', 'error');
             {% endif %}
         });
     </script>
@@ -113,15 +111,19 @@
     </header>
     <!-- Header End !-->
 
-    <!-- Login Start!-->
+    <!-- Signup Start!-->
     <div class="contact-form-area">
         <div class="container">
             <div align="center">
                 <div class="comment-respond">
-                    <h3 style="margin-down: 25px;">用户登录</h3>
+                    <h3 style="margin-down: 25px;">用户注册</h3>
                     <form action="#" method="post" class="comment-form">
                         {% csrf_token %}
                         <div class="row g-4">
+                             <div class="contacts-subject">
+                                 {{ data.name.label_tag }}
+                                 {{ data.name }}
+                            </div>
                             <div class="contacts-email">
                                 {{ data.email.label_tag }}
                                 {{ data.email }}
@@ -131,10 +133,7 @@
                                 {{ data.passwd }}
                             </div>
                             <div class="col-12" align="center">
-                                <button class="theme-btn" type="submit">登录</button>
-                            </div>
-                            <div class="col-12" align="center">
-                                <a href="../signup"><button class="theme-btn" type="button">还没有账号？</button></a>
+                                <button class="theme-btn" type="submit">注册</button>
                             </div>
                         </div>
                     </form>
@@ -142,7 +141,7 @@
             </div>
         </div>
     </div>
-    <!-- Login End!-->
+    <!-- Signup End!-->
 
 
 </body>
