@@ -114,19 +114,19 @@
     <!-- Header End !-->
 
     <!-- Login Start!-->
-    <div class="contact-form-area">
-        <div class="container">
-            <div align="center">
-                <div class="comment-respond">
+    <div class="blog-area tour-details">
+        <div class="container" align="center">
+            <div class="sidebar" style="width: 400px;">
+                <div class="widget widget_booking_form">
                     <h3 style="margin-down: 25px;">用户登录</h3>
                     <form action="#" method="post" class="comment-form">
                         {% csrf_token %}
                         <div class="row g-4">
-                            <div class="contacts-email">
+                            <div class="contacts-email input-wrapper">
                                 {{ data.email.label_tag }}
                                 {{ data.email }}
                             </div>
-                            <div class="contacts-phone">
+                            <div class="contacts-phone input-wrapper">
                                 {{ data.passwd.label_tag }}
                                 {{ data.passwd }}
                             </div>

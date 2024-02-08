@@ -1,7 +1,9 @@
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, HttpResponse, redirect
 from django.urls import reverse
-
+from model.train import predict
+from model.algorithm import PlanManager
+from model.parser import get_args
 from .models import *
 from .forms import *
 from .response import Response
@@ -69,3 +71,32 @@ def logout(request):
         return redirect("../index")
     request.session.flush()
     return redirect("../index")
+
+
+def diyplan(request):
+    if request.method == 'GET':
+        return render(request, 'plan.html')
+
+    # ========== 定制行程
+    args = get_args()
+    constraint = {'user-time': 48,
+                  'user-budget': 1000,
+                  'all-time': 0,
+                  'all-budget': 0,
+                  'prefer-trans': 0,
+                  'select-spot': [10001, 10002, 10003, 10005, 10006, 10007, 10008, 10009, 10041],
+                  'select-food': [],
+                  'lunch-no': [203, 219, 220, 221, 228, 232, 233, 250, 256, 257, 260, 265],
+                  'dinner-no': [203, 221, 228, 232, 233, 250, 256, 257, 260, 265]}
+    plan_manager = PlanManager(constraint)
+    plan_manager.check_constraint()
+    plan_manager.ant_colony()
+    if plan_manager.constraint['all-time'] < plan_manager.constraint['user-time'] and plan_manager.constraint[
+        'all-budget'] < plan_manager.constraint['user-budget'] / 2:
+        plan_manager.plan, plan_manager.constraint = predict(args, 1, plan_manager.plan, plan_manager.constraint)
+    plan_manager.improve_plan()
+    plan_manager.get_trans()
+
+    # ========== 构造返回参数
+
+    return render(request, 'plan.html')
