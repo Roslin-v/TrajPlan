@@ -1,7 +1,7 @@
 import os.path
 import logging
-from data_process import *
-from model import *
+from .data_process import *
+from .model import *
 from sklearn.preprocessing import OneHotEncoder
 import pickle
 import torch.optim as optim
@@ -465,7 +465,7 @@ def predict(args, cur_user, plan, constraint):
     X[:, 0] = raw_X[:, 0]
     X[:, 2:num_cats + 2] = one_hot_rlt  # 把one hot编码插入到原始数据的第三列
     X[:, num_cats + 2:] = raw_X[:, 3:]
-    with open(os.path.join('../data/one-hot-encoder.pkl'), 'wb') as f:
+    with open(os.path.join('./data/one-hot-encoder.pkl'), 'wb') as f:
         pickle.dump(one_hot_encoder, f)
     raw_A = load_matrix(args.data_adj_mtx)
     A = calculate_laplacian_matrix(raw_A, mat_type='hat_rw_normd_lap_mat')
@@ -495,7 +495,6 @@ def predict(args, cur_user, plan, constraint):
                                  args.transformer_nhid,
                                  args.transformer_nlayers,
                                  dropout=args.transformer_dropout)
-
     state_dict = torch.load(args.model_path)
     poi_embed_model.load_state_dict(state_dict['poi_embed_state_dict'])
     node_attn_model.load_state_dict(state_dict['node_attn_state_dict'])

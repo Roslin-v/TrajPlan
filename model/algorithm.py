@@ -4,7 +4,7 @@ import numpy as np
 import requests
 from geopy.distance import geodesic
 import math
-from data_process import *
+from .data_process import *
 
 
 def cal_attraction():
@@ -102,8 +102,8 @@ def cal_heuristics():
 
 
 def get_cost():
-    distance = load_matrix('../data/heuristics.csv')
-    attraction = load_matrix('../data/attraction.csv')
+    distance = load_matrix('./data/heuristics.csv')
+    attraction = load_matrix('./data/attraction.csv')
     # 归一化处理
     dis_min = distance.min()
     k1 = 20 / (distance.max() - dis_min)
@@ -125,8 +125,8 @@ class PlanManager:
         self.plan_situ = {}             # 计划情况 {day1: [是否需要补充行程, [已有poi]]}
         self.trans = {'bus': [], 'taxi': [], 'walk': []}
         self.score = 0
-        self.spot_feat = load_poi_features('../data/spot.csv')
-        self.food_feat = load_poi_features('../data/food.csv')
+        self.spot_feat = load_poi_features('./data/spot.csv')
+        self.food_feat = load_poi_features('./data/food.csv')
 
     def reinitial(self, constraint):
         # 清空原来的计划
@@ -140,7 +140,7 @@ class PlanManager:
         # ========== 获取背包的各项初始化数据
         nodes = self.constraint['select-spot']
         importance = []
-        raw_int = load_matrix('../data/interest.csv')
+        raw_int = load_matrix('./data/interest.csv')
         interest = []
         comment = []
         for each in nodes:
@@ -213,7 +213,7 @@ class PlanManager:
         for i in range(node_count):
             nodes[i] %= 10000
             nodes[i] -= 1
-        he = load_matrix('../data/heuristics.csv')
+        he = load_matrix('./data/heuristics.csv')
         trans_time = np.zeros((node_count-1, node_count-1))
         # 构建转移代价矩阵
         cost = np.zeros((node_count, node_count))

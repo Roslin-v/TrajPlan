@@ -189,7 +189,7 @@ def load_poi_features(path):
 
 # 生成字典
 def initiate_dict():
-    spot_df = pd.read_csv('../data/spot.csv', encoding='ANSI')
+    spot_df = pd.read_csv('./data/spot.csv', encoding='ANSI')
     # food_df = pd.read_csv('../data/food.csv', encoding='ANSI')
     # trans_df = pd.read_csv('../data/transportation.csv', encoding='ANSI')
     # 生成POI ID字典
@@ -209,7 +209,7 @@ def initiate_dict():
     for i, row in spot_df.iterrows():
         poi_cat_dict[poi_id_dict[row['id']]] = cat_id_dict[row['category']]
     # 生成用户ID字典
-    traj_df = pd.read_csv('../data/traj.csv')
+    traj_df = pd.read_csv('./data/traj.csv')
     user_ids = [str(each) for each in list(set(traj_df['user'].to_list()))]
     user_id_dict = dict(zip(user_ids, range(len(user_ids))))
     return poi_id_dict, cat_id_dict, poi_cat_dict, user_id_dict

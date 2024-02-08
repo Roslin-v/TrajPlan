@@ -1,13 +1,14 @@
 import argparse
+import torch
 
 
 def get_args():
     parser = argparse.ArgumentParser(description="Run GETNext.")
     parser.add_argument('--device', type=str, default=torch.device('cpu'), help='')
     # Data
-    parser.add_argument('--data-adj-mtx', type=str, default='../data/cost.csv', help='Graph adjacent path')
-    parser.add_argument('--data-node-feats', type=str, default='../data/spot.csv', help='Graph node features path')
-    parser.add_argument('--data-train', type=str, default='../data/traj.csv', help='Training data path')
+    parser.add_argument('--data-adj-mtx', type=str, default='./data/cost.csv', help='Graph adjacent path')
+    parser.add_argument('--data-node-feats', type=str, default='./data/spot.csv', help='Graph node features path')
+    parser.add_argument('--data-train', type=str, default='./data/traj.csv', help='Training data path')
     parser.add_argument('--short-traj-thres', type=int, default=2, help='Remove over-short trajectory')
     # Model
     parser.add_argument('--poi-embed-dim', type=int, default=128, help='POI embedding dimensions')
@@ -35,7 +36,7 @@ def get_args():
     parser.add_argument('--project', default='../output', help='save to project/name')
     parser.add_argument('--name', default='exp', help='save to project/name')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
-    parser.add_argument('--model-path', type=str, default='../output/exp-3/checkpoints/best_epoch.state.pt', help='Model path.')
+    parser.add_argument('--model-path', type=str, default='./output/exp-3/checkpoints/best_epoch.state.pt', help='Model path.')
 
-    args = parser.parse_args()
+    args = parser.parse_args(args=[])
     return args

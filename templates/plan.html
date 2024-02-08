@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+    <meta charset="utf-8" />
+    <meta name="description" content="Travel Plan - Login"/>
+    <meta name="keywords"
+        content="travel agency, travel adventures, wanderlust, tourism, agency, vacation planning, trip, journey, exploration, voyage, getaway, adventure, travel guide, holiday destinations"/>
+    <meta name="author" content="BoomDevs" />
+
+    <title>鼓浪听涛-定制行程</title>
+    <link rel="icon" type="image/png" href="/assets/images/logo/favicon.png"/>
+    <link rel="apple-touch-icon" href="/assets/images/logo/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon" sizes="57x57" href="/assets/images/logo/apple-touch-icon-57x57.png"/>
+    <link rel="apple-touch-icon" sizes="72x72" href="/assets/images/logo/apple-touch-icon-72x72.png"/>
+    <link rel="apple-touch-icon" sizes="76x76" href="/assets/images/logo/apple-touch-icon-76x76.png"/>
+    <link rel="apple-touch-icon" sizes="114x114" href="/assets/images/logo/apple-touch-icon-114x114.png"/>
+    <link rel="apple-touch-icon" sizes="120x120" href="/assets/images/logo/apple-touch-icon-120x120.png"/>
+    <link rel="apple-touch-icon" sizes="144x144" href="/assets/images/logo/apple-touch-icon-144x144.png"/>
+    <link rel="apple-touch-icon" sizes="152x152" href="/assets/images/logo/apple-touch-icon-152x152.png"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/logo/apple-touch-icon-180x180.png"/>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fasthand&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- <link rel="stylesheet" href="/assets/vendor/select2/dist//assets/css/select2.min.css"/> -->
+
+    <link rel="stylesheet" href="/assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/assets/css/fontawesome.min.css" />
+    <link rel="stylesheet" href="/assets/css/magnific-popup.css" />
+    <link rel="stylesheet" href="/assets/css/slick.css" />
+    <link rel="stylesheet" href="/assets/css/meanmenu.css" />
+    <link rel="stylesheet" href="/assets/css/nice-select.css" />
+    <link rel="stylesheet" href="/assets/css/animate.css" />
+    <link rel="stylesheet" href="/assets/css/style.css" />
+    <link rel="stylesheet" href="../assets/css/multiple-select.min.css" />
+    <link rel="stylesheet" type="text/css" href="/assets/css/sweetalert.css">
+
+    <script type="text/javascript" src="/assets/js/sweetalert-dev.js"></script>
+    <script src="/assets/js/jquery.min.js"></script>
+    <script src="/assets/js/jquery.nice-select.min.js"></script>
+    <script src="/assets/js/slick.min.js"></script>
+    <script src="/assets/js/jquery.counterup.min.js"></script>
+    <script src="/assets/js/waypoints.js"></script>
+    <script src="/assets/js/jquery.meanmenu.min.js"></script>
+    <script src="/assets/js/jquery.magnific-popup.min.js"></script>
+    <script src="/assets/js/inview.min.js"></script>
+    <script src="/assets/js/wow.js"></script>
+    <script src="/assets/js/tilt.jquery.js"></script>
+    <script src="/assets/js/isotope.min.js"></script>
+    <script src="/assets/js/jquery.imagesloaded.min.js"></script>
+    <script src="/assets/js/select2.min.js"></script>
+    <script src="/assets/js/jquery-ui.min.js"></script>
+    <script src="/assets/js/custom.js"></script>
+    <script src="/assets/js/bootstrap.min.js"></script>
+    <script src="../assets/js/multiple-select.min.js"></script>
+
+    <script>
+        $(document).ready(function(){
+            {% if code == 200000 %}
+            swal('尚未登录', '请您先登录网站！', 'warning');
+            setTimeout(() => {
+              location.href = "../login";
+            }, 3000)
+            {% elif code == 200030 %}
+            swal('行程定制失败', '请检查您输入的条件', 'error');
+            {% endif %}
+        });
+        function submitFun() {
+            var user_time = document.getElementById("user_time").value;
+            var user_budget = document.getElementById("user_budget").value;
+            var prefer_trans = document.getElementById("prefer_trans").value;
+            var spots = document.getElementById("select_spot").options;
+            var foods = document.getElementById("food_type").options;
+            var select_spots = []
+            var select_foods = []
+            for (let i = 0; i < spots.length; i++) {
+                if (spots[i].selected) {
+                    select_spots.push(spots[i].value)
+                }
+            }
+            for (let i = 0; i < foods.length; i++) {
+                if (foods[i].selected) {
+                    select_foods.push(foods[i].value)
+                }
+            }
+            var data = {
+                "user_time": user_time,
+                "user_budget": user_budget,
+                "prefer_trans": prefer_trans,
+                "select_spot": select_spots,
+                "food_type": select_foods
+            };
+            console.log(data);
+            $.ajax({
+                type: "post",
+                url: "../plan/",
+                data: data,
+                dataType: "json"
+            });
+        }
+    </script>
+</head>
+<body>
+    <!-- Preloader Start !-->
+    <div id="preloader">
+        <div id="preloader-status">
+            <img src="/assets/images/preloader.gif" alt="Preloader">
+        </div>
+    </div>
+    <!-- Preloader End !-->
+
+    <!-- Header Start !-->
+    <header class="header-area style-1">
+        <!-- Header Nav Menu Start -->
+        <div class="header-menu-area sticky-header">
+            <div class="container">
+                <div class="row">
+                    <div class="col-xl-2 col-lg-2 col-md-6 col-6 d-flex align-items-center">
+                        <div class="logo">
+                            <a href="index.html" class="standard-logo"><img src="/assets/images/logo/nav-logo.png" alt="logo"/></a>
+                            <a href="index.html" class="sticky-logo"><img src="/assets/images/logo/nav-logo.png" alt="logo"/></a>
+                            <a href="index.html" class="retina-logo"><img src="/assets/images/logo/nav-logo.png" alt="logo"/></a>
+                        </div>
+                    </div>
+                    <div class="col-xl-10 col-lg-10 col-md-6 col-6 d-flex align-items-center justify-content-end">
+                        <div class="menu d-inline-block">
+                            <nav id="main-menu" class="main-menu">
+                                <ul>
+                                    <li><a href="../index">主页</a></li>
+                                    <li class="dropdown">
+                                        <a href="../tour">旅游资讯</a>
+                                        <ul class="submenu">
+                                            <li><a href="../spot">景点</a></li>
+                                            <li><a href="../food">美食</a></li>
+                                            <li><a href="../transportation">交通</a></li>
+                                        </ul>
+                                    </li>
+                                    <li><a href="../suggestion">旅游攻略</a></li>
+                                    <li><a href="../plan">定制行程</a></li>
+                                    <li><a href="../about">关于</a></li>
+                                    {% if request.session.is_login %}
+                                    <li class="dropdown">
+                                        <button class="theme-btn">Hello, {{ request.session.user_name }}</button>
+                                        <ul class="submenu">
+                                            <li><a href="../logout">退出登录</a></li>
+                                        </ul>
+                                    </li>
+                                    {% else %}
+                                    <li><a href="../login"><button class="theme-btn">登录</button></a></li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Header Nav Menu End -->
+    </header>
+    <!-- Header End !-->
+
+    <!-- User Constraint Start !-->
+    <div class="contact-form-area">
+        <div class="container" align="center">
+            <div class="comment-respond" style="text-align: left;">
+                <form action="#" method="post" class="comment-form">
+                    {% csrf_token %}
+                    <div class="row g-5">
+                        <div class="col-xl-6">
+                            <label>预计游玩时间（天）：</label>
+                            <input id="user_time" name="user_time" type="number" required="required">
+                        </div>
+                        <div class="col-xl-6">
+                            <label>预算（元）：</label>
+                            <input id="user_budget" name="user_budget" type="number" required="required">
+                        </div>
+                        <div class="col-xl-8">
+                            <label>景点：</label>
+                            <select id="select_spot" name="select_spot" multiple="multiple" required="required">
+                                {% for s in data.spots %}
+                                <option>{{ s }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-xl-8">
+                            <label>美食：</label>
+                            <select id="food_type" name="food_type" multiple="multiple" required="required">
+                                {% for f in data.foods %}
+                                <option>{{ f }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-xl-6">
+                            <label>交通：</label>
+                            <select id="prefer_trans" name="prefer_trans">
+                                <option>公共交通</option>
+                                <option>打的</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button class="theme-btn" type="submit">定制我的行程</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- User Constraint End !-->
+    <script>
+        $('#select_spot').multipleSelect({
+            placeholder: "请选择您想去的景点",
+            minimumCountSelected: 5,
+            filter: true,
+            selectAll: false,
+        });
+        $('#food_type').multipleSelect({
+            placeholder: "请选择您喜欢的美食种类",
+            minimumCountSelected: 5,
+            filter: true,
+            selectAllText: "全选",
+        });
+        $('#prefer_trans').multipleSelect({
+            placeholder: "请选择您偏好的交通方式",
+        });
+    </script>
+</body>
+</html>
