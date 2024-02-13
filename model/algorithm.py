@@ -125,6 +125,7 @@ class PlanManager:
         self.plan_situ = {}             # 计划情况 {day1: [是否需要补充行程, [已有poi]]}
         self.plan_print = []
         self.trans = {'bus': [], 'taxi': [], 'walk': []}
+        self.trans_print = []
         self.score = 0
         self.spot_feat = load_poi_features('./data/spot.csv')
         self.food_feat = load_poi_features('./data/food.csv')
@@ -136,6 +137,7 @@ class PlanManager:
         self.plan_situ = {}
         self.plan_print = []
         self.trans = {'bus': [], 'taxi': [], 'walk': []}
+        self.trans_print = []
         self.score = 0
 
     def knapsack(self, budgets, times, B, T):
@@ -680,6 +682,77 @@ class PlanManager:
                     print('-----')
                     start = terminal
                     index += 1
+
+    def get_trans_print(self):
+        index = 0
+        for key in self.plan:
+            day_t = []
+            p = self.plan[key]
+            start = p[0]
+            # walk: [distance, time]
+            # taxi: [distance, time, cost]
+            # bus: [{'walking':{}, 'bus': {}}]
+            # print: [day, [start, terminal, [way, ]]]
+            for each in p[1:]:
+                if int(each[0] / 10000) == 1:
+                    terminal = each
+                    walk_time = self.trans['walk'][index][1]
+                    temp_t = []
+                    # 走路很近，或者起点终点都在岛上
+                    if walk_time <= 15 or ((start[0] == 10001 or self.spot_feat[start[0] - 10001][10] == 10001) and (
+                            terminal[0] == 10001 or self.spot_feat[terminal[0] - 10001][10] == 10001)):
+                        walk_dis = self.trans['walk'][index][0]
+                        if walk_dis > 1000:
+                            temp_t.append([1, str(round((walk_dis / 1000), 2))+'千米', int(walk_time)])
+                        else:
+                            temp_t.append([1, str(walk_dis)+'米', int(walk_time)])
+                    # 用户倾向于公共交通，并且公共交通更方便，或者要往返鼓浪屿
+                    elif len(self.trans['bus'][index]) != 0 and ((start[0] == 10001 or self.spot_feat[start[0] - 10001][
+                        10] == 10001 or terminal[0] == 10001 or self.spot_feat[terminal[0] - 10001][10] == 10001) or
+                                                                 self.constraint['prefer-trans'] == 0):
+                        for seg in self.trans['bus'][index]:
+                            if 'walking' in seg:
+                                temp_dis = int(seg['walking']['distance'])
+                                if temp_dis > 1000:
+                                    temp_t.append([1, str(round((temp_dis / 1000), 2)) + '千米', int(temp_dis / 75)])
+                                else:
+                                    temp_t.append([1, str(temp_dis) + '米', int(temp_dis / 75)])
+                            if 'bus' in seg:
+                                busline = seg['bus']['buslines'][0]
+                                via_stops = busline['via_stops']
+                                str_via = ""
+                                if len(via_stops) != 0:
+                                    for i in range(len(via_stops) - 1):
+                                        str_via += via_stops[i]['name']
+                                        str_via += '>'
+                                    str_via += via_stops[-1]['name']
+                                bus_type = busline['type']
+                                temp_dis = int(busline['distance'])
+                                speed = 1
+                                if bus_type == '普通公交线路':
+                                    speed = 30 * 16.7
+                                elif bus_type == 'BRT':
+                                    speed = 40 * 16.7
+                                elif bus_type == '地铁':
+                                    speed = 50 * 16.7
+                                if bus_type == '轮渡':
+                                    temp_t.append([2, bus_type, busline['departure_stop']['name'], busline['name'],
+                                                   busline['arrival_stop']['name'], str_via, 15])
+                                else:
+                                    temp_t.append([2, bus_type, busline['departure_stop']['name'], busline['name'],
+                                               busline['arrival_stop']['name'], str_via, int(temp_dis / speed)])
+                    # 用户倾向于打的，或者打的更方便
+                    else:
+                        taxi_dis = self.trans['taxi'][index][0]
+                        if taxi_dis > 1000:
+                            temp_t.append([3, str(round((taxi_dis / 1000), 2)) + '千米', self.trans['taxi'][index][1], self.trans['taxi'][index][2]])
+                            print('%.2f km' % (taxi_dis / 1000))
+                        else:
+                            temp_t.append([3, str(taxi_dis) + '米', self.trans['taxi'][index][1], self.trans['taxi'][index][2]])
+                    day_t.append([start[1], terminal[1], temp_t])
+                    start = terminal
+                    index += 1
+            self.trans_print.append([key, day_t])
 
     # 根据POI种类丰富度和行程时间安排评估行程分数
     def evaluate(self):

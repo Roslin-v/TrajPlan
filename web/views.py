@@ -131,13 +131,18 @@ def diyplan(request):
         plan_manager.improve_plan()
         plan_manager.get_trans()
         plan_manager.get_plan_print()
+        plan_manager.get_trans_print()
         plan_manager.evaluate()
     except:
         return render(request, 'plan.html', Response(200030, {'spots': spots, 'foods': foods}).res2dict())
     
     # Todo: 处理plan和trans，让前端可以友好地显示
     print(plan_manager.plan_print)
+    print(plan_manager.trans_print)
+    
+    
     return render(request, 'plan.html', Response(200031, {'plan': plan_manager.plan_print,
+                                                          'trans': plan_manager.trans_print,
                                                           'score': round(plan_manager.score/20, 1),
                                                           'days': len(plan_manager.plan),
                                                           'budget': int(plan_manager.constraint['all-budget'])}).res2dict())

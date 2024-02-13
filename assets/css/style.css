@@ -7723,6 +7723,12 @@ body.admin-bar .header-menu-area.sticky_menu {
   background-color: #ffffff;
   box-shadow: 0px 20px 40px 0px rgba(199, 206, 218, 0.2);
 }
+.accordion-wrapper .accordion-list-item2 {
+  border-radius: 12px;
+  width: 400px;
+  background-color: #ffffff;
+  box-shadow: 0px 20px 40px 0px rgba(199, 206, 218, 0.2);
+}
 @media (max-width: 1080px) {
   .accordion-wrapper .accordion-list-item {
     width: 100%;
@@ -9766,7 +9772,6 @@ body.admin-bar .header-menu-area.sticky_menu {
   margin-bottom: 8px;
   font-size: 18px;
   line-height: 24px;
-  color: #FE712A;
   font-family: "Plus Jakarta Sans", sans-serif;
 }
 .widget_latest_post ul li .latest-post-desc .latest-post-title a {
