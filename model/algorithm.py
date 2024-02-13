@@ -118,7 +118,7 @@ def get_cost():
 
 
 class PlanManager:
-    def __init__(self, constraint):
+    def __init__(self, constraint=None):
         self.constraint = constraint    # 约束
         self.all_cost = get_cost()      # 各个景点之间的转移代价
         self.plan = {}                  # 计划 {day1: [poi_id, poi_name, ...]}

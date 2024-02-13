@@ -10,6 +10,9 @@ from .response import Response
 from hashlib import sha256
 
 
+plan_manager = PlanManager()
+
+
 def index(request):
     return render(request, 'index.html', Response(200001).res2dict())
 
@@ -121,7 +124,7 @@ def diyplan(request):
                   'dinner-no': list(lunch_no)}
 
     # 规划并丰富行程
-    plan_manager = PlanManager(constraint)
+    plan_manager.reinitial(constraint)
     try:
         plan_manager.check_constraint()
         plan_manager.ant_colony()
@@ -135,11 +138,6 @@ def diyplan(request):
         plan_manager.evaluate()
     except:
         return render(request, 'plan.html', Response(200030, {'spots': spots, 'foods': foods}).res2dict())
-    
-    # Todo: 处理plan和trans，让前端可以友好地显示
-    print(plan_manager.plan_print)
-    print(plan_manager.trans_print)
-    
     
     return render(request, 'plan.html', Response(200031, {'plan': plan_manager.plan_print,
                                                           'trans': plan_manager.trans_print,
