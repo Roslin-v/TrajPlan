@@ -121,7 +121,6 @@ def diyplan(request):
                   'dinner-no': list(lunch_no)}
 
     # 规划并丰富行程
-    print(constraint)
     plan_manager = PlanManager(constraint)
     try:
         plan_manager.check_constraint()
@@ -131,10 +130,14 @@ def diyplan(request):
                                                                  plan_manager.constraint)
         plan_manager.improve_plan()
         plan_manager.get_trans()
+        plan_manager.get_plan_print()
+        plan_manager.evaluate()
     except:
         return render(request, 'plan.html', Response(200030, {'spots': spots, 'foods': foods}).res2dict())
-
+    
     # Todo: 处理plan和trans，让前端可以友好地显示
-    return render(request, 'plan.html', Response(200031, {'plan': plan_manager.plan}).res2dict())
-
-
+    print(plan_manager.plan_print)
+    return render(request, 'plan.html', Response(200031, {'plan': plan_manager.plan_print,
+                                                          'score': round(plan_manager.score/20, 1),
+                                                          'days': len(plan_manager.plan),
+                                                          'budget': int(plan_manager.constraint['all-budget'])}).res2dict())

@@ -123,6 +123,7 @@ class PlanManager:
         self.all_cost = get_cost()      # 各个景点之间的转移代价
         self.plan = {}                  # 计划 {day1: [poi_id, poi_name, ...]}
         self.plan_situ = {}             # 计划情况 {day1: [是否需要补充行程, [已有poi]]}
+        self.plan_print = []
         self.trans = {'bus': [], 'taxi': [], 'walk': []}
         self.score = 0
         self.spot_feat = load_poi_features('./data/spot.csv')
@@ -133,6 +134,7 @@ class PlanManager:
         self.constraint = constraint
         self.plan = {}
         self.plan_situ = {}
+        self.plan_print = []
         self.trans = {'bus': [], 'taxi': [], 'walk': []}
         self.score = 0
 
@@ -418,6 +420,27 @@ class PlanManager:
         print('Total time:\t', self.constraint['all-time'], '小时')
         print('Total fee:\t', self.constraint['all-budget'], '元')
 
+    def get_plan_print(self):
+        for key in self.plan:
+            p = self.plan[key]
+            temp_p = []
+            for each in p:
+                if int(each[0] / 10000) == 1:    # 景点
+                    time_str = str(math.floor(each[2]))
+                    if math.floor(each[2]) != each[2]:
+                        time_str += ':30-'
+                    else:
+                        time_str += ':00-'
+                    time_str += str(math.floor(each[3]))
+                    if math.floor(each[3]) != each[3]:
+                        time_str += ':30'
+                    else:
+                        time_str += ':00'
+                    temp_p.append([1, each[1], time_str, each[4]])
+                else:   # 餐厅
+                    temp_p.append([2, each[1], each[2], each[3], each[4]])
+            self.plan_print.append([key, temp_p])
+
     def recommend_food(self, point1, point2, decadence, position=False):
         distance = []
         if point1 is not None and point2 is not None:
@@ -674,7 +697,8 @@ class PlanManager:
                     cat.add(self.spot_feat[each[0]-10001][2])
                     spot_time += (each[3] - each[2])
         self.score = 0.5 * len(cat) / 6 + 0.3 * spot_time / play_time + 0.2 * play_time / self.constraint['user-time'] * 2
-        print('Score: %.2f' % (self.score * 100), end='')
+        self.score *= 100
+        print('Score: %.2f' % self.score, end='')
         print('/100')
 
 

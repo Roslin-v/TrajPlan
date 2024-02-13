@@ -6067,7 +6067,7 @@ body.admin-bar .header-menu-area.sticky_menu {
   margin-top: 60px;
   margin-bottom: 24px !important;
 }
-.destination-details .sidebar .widget_latest_post li .price {
+.widget_latest_post ul li .latest-post-desc .price {
   font-family: "Plus Jakarta Sans", sans-serif;
   color: #3B71FE;
   font-size: 20px;

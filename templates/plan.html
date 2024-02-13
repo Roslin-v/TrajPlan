@@ -33,7 +33,7 @@
     <link rel="stylesheet" href="/assets/css/nice-select.css" />
     <link rel="stylesheet" href="/assets/css/animate.css" />
     <link rel="stylesheet" href="/assets/css/style.css" />
-    <link rel="stylesheet" href="../assets/css/multiple-select.min.css" />
+    <link rel="stylesheet" href="/assets/css/multiple-select.min.css" />
     <link rel="stylesheet" type="text/css" href="/assets/css/sweetalert.css">
 
     <script type="text/javascript" src="/assets/js/sweetalert-dev.js"></script>
@@ -53,7 +53,7 @@
     <script src="/assets/js/jquery-ui.min.js"></script>
     <script src="/assets/js/custom.js"></script>
     <script src="/assets/js/bootstrap.min.js"></script>
-    <script src="../assets/js/multiple-select.min.js"></script>
+    <script src="/assets/js/multiple-select.min.js"></script>
 
     <script>
         $(document).ready(function(){
@@ -167,6 +167,11 @@
                 <form action="#" method="post" class="comment-form">
                     {% csrf_token %}
                     <div class="row g-5">
+                        {% if code == 200031 %}
+                        <div class="col-12">
+                            <a href="../plan"><button class="theme-btn" type="button">重新定制行程</button></a>
+                        </div>
+                        {% else %}
                         <div class="col-xl-6">
                             <label>预计游玩时间（天）：</label>
                             <input id="user_time" name="user_time" type="number" required="required">
@@ -201,12 +206,148 @@
                         <div class="col-12">
                             <button class="theme-btn" type="submit">定制我的行程</button>
                         </div>
+                        {% endif %}
                     </div>
                 </form>
             </div>
         </div>
     </div>
     <!-- User Constraint End !-->
+
+    {% if code == 200031 %}
+    <!-- Plan Show Start !-->
+    <div class="blog-area tour-details">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 blog-details-wrapper">
+                    <!-- Post Details Start -->
+                    <article class="single-post-item">
+                        <div class="post-title-wrapper">
+                            <h3 class="post-title">
+                                <a href="blog-details.html">鼓浪听涛·鹭岛之旅</a>
+                            </h3>
+                            <div class="rating">
+                                <div class="ratting-inner">
+                                    <span>
+                                        <i class="fa-solid fa-star"></i>
+                                    </span>
+                                    <span class="counter">{{ data.score }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="post-meta style-2">
+                                <div class="post-meta-inner">
+                                    <div class="date-info">
+                                       <i class="fa-solid fa-location-dot"></i>
+                                        <p class="date">厦门</p>
+                                    </div>
+                                    <div class="time-info">
+                                        <i class="fa-solid fa-clock"></i>
+                                        <p class="time">{{ data.days }}天</p>
+                                    </div>
+                                </div>
+                                <h5 class="price">{{ data.budget }}元</h5>
+                         </div>
+                        <div class="post-thumbnail">
+                            <a href="#">
+                                <img src="/assets/images/tour-details/thumbnail.jpg" alt="Blog Image" />
+                            </a>
+                        </div>
+                        <div class="post-content-wrapper">
+                            <div class="post-content">
+                                <div class="post-card-divider"></div>
+                                 <div class="list-item-wrapper">
+                                    <div class="single-item-list">
+                                        <h6>旅程包含</h6>
+                                        <ul>
+                                            <li>根据您的选择推荐的{{ data.days}}天景点之旅</li>
+                                            <li>根据您的喜好推荐的厦门特色美食</li>
+                                            <li>根据您的偏好提供的出行交通建议</li>
+                                        </ul>
+                                    </div>
+                                    <div class="single-item-list">
+                                        <h6>预算包含</h6>
+                                        <ul>
+                                            <li>景点门票</li>
+                                            <li>美食价格</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="post-content-wrapper">
+                            <div class="post-content">
+                                <h4>旅行计划</h4>
+                                <div class="post-card-faq">
+                                    <!-- Accordion Start -->
+                                    <div class="accordion-wrapper style-two">
+                                            <div class="accordion-box-wrapper" id="appointmentAreaStyle1FAQ">
+                                                {% for p in data.plan %}
+                                                <!-- Single Accordion Start -->
+                                                <div class="accordion-list-item">
+                                                    <div id="heading{{key}}">
+                                                        <div class="accordion-head"  role="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapse{{key}}">
+                                                            <h3 class="accordion-title">DAY {{ p.0 }}</h3>
+                                                        </div>
+                                                    </div>
+                                                    <div id="collapse{{1}}" role="button" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#appointmentAreaStyle1FAQ">
+                                                        <div class="accordion-item-body">
+                                                            <div class="destination-details sidebar widget widget_latest_post">
+                                                            <ul>
+                                                            {% for each in p.1 %}
+                                                                {% if each.0 == 1 %}
+                                                                <li>
+                                                                    <div class="latest-post-thumb">
+                                                                        <img src="/assets/images/blog/recent-post/image-5.jpg" alt="Latest Post"/>
+                                                                    </div>
+                                                                    <div class="latest-post-desc">
+                                                                        <h3 class="latest-post-title">
+                                                                            <a href="blog-details.html">{{ each.1 }}</a>
+                                                                        </h3>
+                                                                        <span class="latest-post-meta">建议游玩时间：{{ each.2 }}</span>
+                                                                        {% if each.3 != 0 %}
+                                                                        <span class="price">门票：{{ each.3 }}元</span>
+                                                                        {% else %}
+                                                                        <span class="price">门票：免费</span>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                </li>
+                                                                {% else %}
+                                                                <li>
+                                                                    <div class="latest-post-thumb">
+                                                                        <img src="/assets/images/blog/recent-post/image-5.jpg" alt="Latest Post"/>
+                                                                    </div>
+                                                                    <div class="latest-post-desc">
+                                                                        <h3 class="latest-post-title">
+                                                                            <a href="blog-details.html">{{ each.1 }}</a>
+                                                                        </h3>
+                                                                        <span class="latest-post-meta">评分：{{ each.2 }}</span>
+                                                                        <span class="latest-post-meta">种类：{{ each.3 }}</span>
+                                                                        <span class="price">人均：{{ each.4 }}元</span>
+                                                                    </div>
+                                                                </li>
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                            </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <!-- Single Accordion End -->
+                                                {% endfor %}
+                                            </div>
+                                    </div>
+                                    <!-- Accordion End -->
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Plan Show End !-->
+    {% endif %}
     <script>
         $('#select_spot').multipleSelect({
             placeholder: "请选择您想去的景点",
