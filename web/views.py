@@ -14,7 +14,9 @@ plan_manager = PlanManager()
 
 
 def index(request):
-    return render(request, 'index.html', Response(200001).res2dict())
+    spot = Spot.objects.values('name', 'score')[:9]
+    print(spot)
+    return render(request, 'index.html', Response(200001, {'spot': spot}).res2dict())
 
 
 def login(request):
