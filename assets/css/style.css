@@ -4899,6 +4899,7 @@ body.admin-bar .header-menu-area.sticky_menu {
 .location-card.style-2 .content-wrapper .content-inner .content-title {
   width: auto;
   background-position: -100%;
+  color: #FFFFFF;
 }
 .location-card.style-2 .content-wrapper .content-inner .content-title a {
   font-size: 28px;
@@ -9381,6 +9382,10 @@ body.admin-bar .header-menu-area.sticky_menu {
 .widget.widget_search {
   display: flex;
   gap: 12px;
+  background-color: transparent;
+  width: 800px;
+  align: center;
+  margin-top: 35px;
 }
 .widget.widget_search button {
   width: 62px;

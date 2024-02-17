@@ -32,6 +32,7 @@ class Spot(models.Model):
     night_visit = models.IntegerField(blank=True, null=True)
     belong = models.IntegerField(blank=True, null=True)
     description = models.CharField(max_length=255, blank=True, null=True)
+    pic = models.CharField(max_length=20, blank=True, null=True)
 
     class Meta:
         managed = True

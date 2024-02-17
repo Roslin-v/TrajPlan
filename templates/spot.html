@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+    <meta charset="utf-8" />
+
+    <title>鼓浪听涛-定制行程</title>
+    <link rel="icon" type="image/png" href="/assets/images/logo.svg"/>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fasthand&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- <link rel="stylesheet" href="/assets/vendor/select2/dist//assets/css/select2.min.css"/> -->
+
+    <link rel="stylesheet" href="/assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/assets/css/fontawesome.min.css" />
+    <link rel="stylesheet" href="/assets/css/magnific-popup.css" />
+    <link rel="stylesheet" href="/assets/css/slick.css" />
+    <link rel="stylesheet" href="/assets/css/meanmenu.css" />
+    <link rel="stylesheet" href="/assets/css/nice-select.css" />
+    <link rel="stylesheet" href="/assets/css/animate.css" />
+    <link rel="stylesheet" href="/assets/css/style.css" />
+    <link rel="stylesheet" href="/assets/css/multiple-select.min.css" />
+    <link rel="stylesheet" type="text/css" href="/assets/css/sweetalert.css">
+
+    <script type="text/javascript" src="/assets/js/sweetalert-dev.js"></script>
+    <script src="/assets/js/jquery.min.js"></script>
+    <script src="/assets/js/jquery.nice-select.min.js"></script>
+    <script src="/assets/js/slick.min.js"></script>
+    <script src="/assets/js/jquery.counterup.min.js"></script>
+    <script src="/assets/js/waypoints.js"></script>
+    <script src="/assets/js/jquery.meanmenu.min.js"></script>
+    <script src="/assets/js/jquery.magnific-popup.min.js"></script>
+    <script src="/assets/js/inview.min.js"></script>
+    <script src="/assets/js/wow.js"></script>
+    <script src="/assets/js/tilt.jquery.js"></script>
+    <script src="/assets/js/isotope.min.js"></script>
+    <script src="/assets/js/jquery.imagesloaded.min.js"></script>
+    <script src="/assets/js/select2.min.js"></script>
+    <script src="/assets/js/jquery-ui.min.js"></script>
+    <script src="/assets/js/custom.js"></script>
+    <script src="/assets/js/bootstrap.min.js"></script>
+    <script src="/assets/js/multiple-select.min.js"></script>
+
+    <script>
+        $(document).ready(function(){
+            {% if code == 200040 %}
+            swal('查询失败', '请检查您输入的关键词！', 'error');
+            {% elif code == 200041 %}
+            swal('查询成功', '请查看您的查询结果！', 'success');
+            {% endif %}
+        });
+        function nextPage() {
+            // 调整导航栏
+            cur_page = document.querySelector('.page-numbers current');
+            cur_page.className = "page-numbers";
+            cur_page.setAttribute('aria-current', "");
+            next_page = document.getElementById("page" + cur_page.id.substr(-1));
+            next_page.className = "page-numbers current";
+            next_page.setAttribute('aria-current', "page");
+            if (next_page.id.substr(-1) == {{data.pages}}) {
+                arrow_right = document.querySelector('.next page-numbers');
+                arrow_right.style.display = "none";
+
+            }
+            // 调整页面显示内容
+            for (var i=(cur_page.id.substr(-1)-1)*9, i < cur_page.id.substr(-1)*9, i++) {
+                document.getElementById("card" + i.toString()).style.display = "none";
+            }
+            for (var i=(next_page.id.substr(-1)-1)*9, i < next_page.id.substr(-1)*9 && i < {{ data.counts }}, i++) {
+                document.getElementById("card" + i.toString()).style.display = "";
+            }
+        }
+    </script>
+</head>
+<body>
+    <!-- Preloader Start !-->
+    <div id="preloader">
+        <div id="preloader-status">
+            <img src="/assets/images/preloader.gif" alt="Preloader">
+        </div>
+    </div>
+    <!-- Preloader End !-->
+
+    <!-- Header Start !-->
+    <header class="header-area style-1">
+        <!-- Header Nav Menu Start -->
+        <div class="header-menu-area sticky-header">
+            <div class="container">
+                <div class="row">
+                    <div class="col-xl-2 col-lg-2 col-md-6 col-6 d-flex align-items-center">
+                        <div class="logo">
+                            <a href="../index" class="standard-logo" style="width:75px;">
+                                <img src="/assets/images/logo.svg" alt="logo" width="80%" height="80%"/>
+                            </a>
+                            <h6>鼓浪听涛</h6>
+                        </div>
+                    </div>
+                    <div class="col-xl-10 col-lg-10 col-md-6 col-6 d-flex align-items-center justify-content-end">
+                        <div class="menu d-inline-block">
+                            <nav id="main-menu" class="main-menu">
+                                <ul>
+                                    <li><a href="../index">主页</a></li>
+                                    <li class="dropdown">
+                                        <a href="../tour">旅游资讯</a>
+                                        <ul class="submenu">
+                                            <li><a href="../spot">景点</a></li>
+                                            <li><a href="../food">美食</a></li>
+                                            <li><a href="../transportation">交通</a></li>
+                                        </ul>
+                                    </li>
+                                    <li><a href="../suggestion">旅游攻略</a></li>
+                                    <li><a href="../plan">定制行程</a></li>
+                                    <li><a href="../about">关于</a></li>
+                                    {% if request.session.is_login %}
+                                    <li class="dropdown">
+                                        <button class="theme-btn">Hello, {{ request.session.user_name }}</button>
+                                        <ul class="submenu">
+                                            <li><a href="../logout">退出登录</a></li>
+                                        </ul>
+                                    </li>
+                                    {% else %}
+                                    <li><a href="../login"><button class="theme-btn">登录</button></a></li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Header Nav Menu End -->
+    </header>
+    <!-- Header End !-->
+
+    <!-- Page Header Start !-->
+    <div class="page-breadcrumb-area page-bg" style="background-image: url('/assets/images/xiamen.jpg')">
+        <!-- <div class="page-overlay"></div> -->
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="breadcrumb-wrapper">
+                        <div class="page-heading">
+                            <h3 class="page-title">景点</h3>
+                        </div>
+                        <div class="widget widget_search">
+                            <form class="search-form" action="#" method="post">
+                                <input id="search" name="search" type="text" placeholder="搜索..."/>
+                            </form>
+                            <button type="submit"><i class="icon-search"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Page Header End !-->
+
+    <!-- Location Area Start -->
+    <div class="tour-area">
+        <div class="location-area style-1">
+            <div class="container">
+                <div class="isotope-grid">
+                    <div class="row gy-4">
+                        {% for s in data.spot %}
+                        <!--- Single Location Start !-->
+                        <div class="col-lg-4 col-md-6 masonry-portfolio-item resort beach wow fadeInUp" data-wow-delay="0s">
+                            <div id="card{{loop.index}}" class="location-card style-2">
+                                <div class="image-wrapper">
+                                    <img src="/assets/images/{{s.pic}}.jpg" alt="Location Image">
+                                    <div class="rating">
+                                        <div class="ratting-inner">
+                                            <span><i class="fa-solid fa-star"></i></span>
+                                            <span class="counter">{{ s.score }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="content-wrapper">
+                                    <div class="content-inner">
+                                        <h3 class="content-title"><a>{{ s.name }}</a></h3>
+                                        <div class="time-zone">
+                                            <div class="time-zone-inner">
+                                                {% if s.price %}
+                                                <h5 class="price"><span class="counter">门票：{{ s.price }}元</span></h5>
+                                                {% else %}
+                                                <h5 class="price"><span class="counter">门票：免费</span></h5>
+                                                {% endif %}
+                                            </div>
+                                            {% if s.description != None %}
+                                            <div class="time-zone-inner">
+                                                <p class="title">{{ s.description }}</p>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!--- Single Location End !-->
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="basic-pagination">
+                    <ul class="justify-content-center">
+                        <li><a class="prev page-numbers" href="#"><i class="fa fa-arrow-left"></i></a></li>
+                        <li><span id="page{{p}}" class="page-numbers">{{ p }}</span></li>
+                        <li><span id="page{{data.pages}}" class="page-numbers">{{ data.pages }}</span></li>
+                        <li><span id="pagedot" class="page-numbers dots">…</span></li>
+                        <li><a class="next page-numbers" href="#"><i class="fa fa-arrow-right"></i></a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Location Area End -->
+
+    <!--- Start Footer !-->
+    <footer class="footer bg-light-black">
+        <div class="footer-sec">
+            <div class="container">
+                <div class="row">
+                    <div class="col-xxl-3 col-xl-3 col-lg-3 col-md-6">
+                        <div class="footer-widget">
+                            <div class="footer-widget-logo">
+                                <div class="footer-logo">
+                                    <a href="index.html"><img src="/assets/images/logo.svg" alt="Footer Logo"/></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-6 ">
+                        <div class="footer-widget footer-widget-info">
+                            <h2 class="footer-widget-title">关于·鼓浪听涛</h2>
+                            <div class="footer-widget-contact">
+                                <p class="desc">我们利用规划算法和推荐算法为您提供符合需求和偏好的行程规划</p>
+                                <div class="footer-contact">
+                                    <div class="contact-icon"><i class="fa-solid fa-location-dot"></i></div>
+                                    <div class="contact-text"><span>NKU, China</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xxl-5 col-xl-5 col-lg-5 col-md-6">
+                        <div class="footer-widget-menu-wrapper">
+                            <div class="footer-widget widget_nav_menu">
+                                <h2 class="footer-widget-title">快速访问</h2>
+                                <ul class="menu">
+                                    <li><a href="../index">主页</a></li>
+                                    <li><a href="../tour">旅游资讯</a></li>
+                                    <li><a href="../suggestion">旅游攻略</a></li>
+                                    <li><a href="../plan">定制行程</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <div class="row">
+                    <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-6 ">
+                        <div class="footer-widget">
+                            <h2 class="footer-widget-title">联系我们</h2>
+                             <div class="footer-widget-contact">
+                                 <div class="footer-contact">
+                                    <div class="contact-icon"><i class="fa-solid fa-envelope"></i></div>
+                                    <div class="contact-text">roslin_v@163.com</div>
+                                </div>
+                             </div>
+                        </div>
+                    </div>
+                    <div class="col-xxl-5 col-xl-5 col-lg-5 col-md-6  d-flex  justify-content-lg-end align-items-lg-end">
+                        <div class="footer-widget">
+                            <h2 class="footer-widget-title">关注我们</h2>
+                            <div class="footer-widget-social">
+                                <div class="social-profile">
+                                    <a href="https://github.com/Roslin-v"><img src="/assets/images/github.svg"></a>
+                                    <a href="https://blog.csdn.net/Roslin_v"><img src="/assets/images/csdn.svg"></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom-area">
+            <div class="container">
+                <div class="footer-bottom-wrapper">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="copyright-text">
+                                <p>Copyright &copy; Roslin V.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!--- End Footer !-->
+
+    <!-- Scroll Up Section Start -->
+    <div id="scrollTop" class="scrollup-wrapper">
+        <div class="scrollup-btn">
+            <i class="fa-solid fa-arrow-up"></i>
+        </div>
+    </div>
+    <!-- Scroll Up Section End -->
+
+    <script>
+        first_page = document.getElementById("page1");
+        first_page.setAttribute('aria-current', "page");
+        first_page.className = "page-numbers current";
+    </script>
+</body>
+</html>

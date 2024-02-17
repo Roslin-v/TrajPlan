@@ -1,3 +1,5 @@
+import math
+
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, HttpResponse, redirect
 from django.urls import reverse
@@ -145,3 +147,23 @@ def diyplan(request):
                                                           'score': round(plan_manager.score/20, 1),
                                                           'days': len(plan_manager.plan),
                                                           'budget': int(plan_manager.constraint['all-budget'])}).res2dict())
+
+
+def show_spot(request):
+    result = Spot.objects.values('name', 'score', 'price', 'description', 'pic')[:30]
+    pages = math.ceil(len(result) / 9)
+    counts = len(result)
+
+    if request.method == 'GET':
+        return render(request, 'spot.html', Response(200001, {'spot': result, 'pages': pages, 'counts': counts}).res2dict())
+
+    search_spot = request.POST.get('search')
+    if search_spot:
+        print(search_spot)
+        search_result = Spot.objects.filter(name_icontains=search_spot).values('name', 'score', 'price', 'description', 'pic')
+        pages = math.ceil(len(search_result) / 9)
+        counts = len(search_result)
+        if result:
+            return render(request, 'spot.html', Response(200041, {'spot': search_result, 'pages': pages, 'counts': counts}).res2dict())
+
+    return render(request, 'spot.html', Response(200040, {'spot': result, 'pages': pages, 'counts': counts}).res2dict())
