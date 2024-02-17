@@ -438,7 +438,10 @@ class PlanManager:
                         time_str += ':30'
                     else:
                         time_str += ':00'
-                    temp_p.append([1, each[1], time_str, each[4]])
+                    if str(self.spot_feat[each[0]-10001][11]) != 'nan':
+                        temp_p.append([1, each[1], time_str, int(each[4]), self.spot_feat[each[0]-10001][11]])
+                    else:
+                        temp_p.append([1, each[1], time_str, int(each[4]), None])
                 else:   # 餐厅
                     temp_p.append([2, each[1], each[2], each[3], each[4]])
             self.plan_print.append([key, temp_p])
@@ -771,8 +774,8 @@ class PlanManager:
                     spot_time += (each[3] - each[2])
         self.score = 0.5 * len(cat) / 6 + 0.3 * spot_time / play_time + 0.2 * play_time / self.constraint['user-time'] * 2
         self.score *= 100
-        print('Score: %.2f' % self.score, end='')
-        print('/100')
+        # print('Score: %.2f' % self.score, end='')
+        # print('/100')
 
 
 if __name__ == '__main__':

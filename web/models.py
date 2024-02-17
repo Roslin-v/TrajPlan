@@ -31,6 +31,7 @@ class Spot(models.Model):
     recommend_time = models.FloatField(blank=True, null=True)
     night_visit = models.IntegerField(blank=True, null=True)
     belong = models.IntegerField(blank=True, null=True)
+    description = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         managed = True

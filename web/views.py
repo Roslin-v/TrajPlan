@@ -15,7 +15,6 @@ plan_manager = PlanManager()
 
 def index(request):
     spot = Spot.objects.values('name', 'score')[:9]
-    print(spot)
     return render(request, 'index.html', Response(200001, {'spot': spot}).res2dict())
 
 
@@ -140,7 +139,7 @@ def diyplan(request):
         plan_manager.evaluate()
     except:
         return render(request, 'plan.html', Response(200030, {'spots': spots, 'foods': foods}).res2dict())
-    
+
     return render(request, 'plan.html', Response(200031, {'plan': plan_manager.plan_print,
                                                           'trans': plan_manager.trans_print,
                                                           'score': round(plan_manager.score/20, 1),
