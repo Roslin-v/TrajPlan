@@ -160,10 +160,11 @@ def show_spot(request):
     search_spot = request.POST.get('search')
     if search_spot:
         print(search_spot)
-        search_result = Spot.objects.filter(name_icontains=search_spot).values('name', 'score', 'price', 'description', 'pic')
+        search_result = Spot.objects.filter(name__icontains=search_spot).values('name', 'score', 'price', 'description', 'pic')
         pages = math.ceil(len(search_result) / 9)
         counts = len(search_result)
         if result:
-            return render(request, 'spot.html', Response(200041, {'spot': search_result, 'pages': pages, 'counts': counts}).res2dict())
+            return render(request, 'spot.html', Response(200041, {'search': search_spot, 'spot': search_result,
+                                                                  'pages': pages, 'counts': counts}).res2dict())
 
     return render(request, 'spot.html', Response(200040, {'spot': result, 'pages': pages, 'counts': counts}).res2dict())

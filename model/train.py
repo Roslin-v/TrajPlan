@@ -454,7 +454,7 @@ def train(args):
 
 def predict(args, cur_user, plan, constraint):
     # ========== 加载模型
-    raw_X = load_poi_features(args.data_node_feats)[:, 0:-1]
+    raw_X = load_poi_features(args.data_node_feats)[:, 0:-2]
     num_pois = raw_X.shape[0]
     one_hot_encoder = OneHotEncoder()
     cat_list = list(raw_X[:, 2])

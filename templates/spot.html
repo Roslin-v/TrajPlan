@@ -50,6 +50,7 @@
             swal('查询成功', '请查看您的查询结果！', 'success');
             {% endif %}
         });
+        /*
         function nextPage() {
             // 调整导航栏
             cur_page = document.querySelector('.page-numbers current');
@@ -70,7 +71,7 @@
             for (var i=(next_page.id.substr(-1)-1)*9, i < next_page.id.substr(-1)*9 && i < {{ data.counts }}, i++) {
                 document.getElementById("card" + i.toString()).style.display = "";
             }
-        }
+        }*/
     </script>
 </head>
 <body>
@@ -145,7 +146,12 @@
                         </div>
                         <div class="widget widget_search">
                             <form class="search-form" action="#" method="post">
-                                <input id="search" name="search" type="text" placeholder="搜索..."/>
+                                {% csrf_token %}
+                                {% if code == 200041 %}
+                                <input name="search" type="text" placeholder="{{ data.search }}"/>
+                                {% else %}
+                                <input name="search" type="text" placeholder="搜索..."/>
+                                {% endif %}
                             </form>
                             <button type="submit"><i class="icon-search"></i></button>
                         </div>
@@ -167,7 +173,7 @@
                         <div class="col-lg-4 col-md-6 masonry-portfolio-item resort beach wow fadeInUp" data-wow-delay="0s">
                             <div id="card{{loop.index}}" class="location-card style-2">
                                 <div class="image-wrapper">
-                                    <img src="/assets/images/{{s.pic}}.jpg" alt="Location Image">
+                                    <img src="/assets/images/{{s.pic}}" alt="Location Image">
                                     <div class="rating">
                                         <div class="ratting-inner">
                                             <span><i class="fa-solid fa-star"></i></span>
@@ -179,11 +185,11 @@
                                     <div class="content-inner">
                                         <h3 class="content-title"><a>{{ s.name }}</a></h3>
                                         <div class="time-zone">
-                                            <div class="time-zone-inner">
-                                                {% if s.price %}
-                                                <h5 class="price"><span class="counter">门票：{{ s.price }}元</span></h5>
+                                            <div class="time-zone-inner" style="margin-bottom: -20px;">
+                                                {% if s.price != 0 %}
+                                                <h5 class="price">门票：{{ s.price }}元</h5>
                                                 {% else %}
-                                                <h5 class="price"><span class="counter">门票：免费</span></h5>
+                                                <h5 class="price">门票：免费</h5>
                                                 {% endif %}
                                             </div>
                                             {% if s.description != None %}
@@ -306,9 +312,9 @@
     <!-- Scroll Up Section End -->
 
     <script>
-        first_page = document.getElementById("page1");
-        first_page.setAttribute('aria-current', "page");
-        first_page.className = "page-numbers current";
+        //first_page = document.getElementById("page1");
+        //first_page.setAttribute('aria-current', "page");
+        //first_page.className = "page-numbers current";
     </script>
 </body>
 </html>

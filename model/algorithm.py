@@ -439,7 +439,7 @@ class PlanManager:
                     else:
                         time_str += ':00'
                     if str(self.spot_feat[each[0]-10001][11]) != 'nan':
-                        temp_p.append([1, each[1], time_str, int(each[4]), self.spot_feat[each[0]-10001][11]])
+                        temp_p.append([1, each[1], time_str, int(each[4]), self.spot_feat[each[0]-10001][11], self.spot_feat[each[0]-10001][12]])
                     else:
                         temp_p.append([1, each[1], time_str, int(each[4]), None])
                 else:   # 餐厅
