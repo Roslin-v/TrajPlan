@@ -53,38 +53,6 @@
             swal('行程定制失败', '请检查您输入的条件', 'error');
             {% endif %}
         });
-        function submitFun() {
-            var user_time = document.getElementById("user_time").value;
-            var user_budget = document.getElementById("user_budget").value;
-            var prefer_trans = document.getElementById("prefer_trans").value;
-            var spots = document.getElementById("select_spot").options;
-            var foods = document.getElementById("food_type").options;
-            var select_spots = []
-            var select_foods = []
-            for (let i = 0; i < spots.length; i++) {
-                if (spots[i].selected) {
-                    select_spots.push(spots[i].value)
-                }
-            }
-            for (let i = 0; i < foods.length; i++) {
-                if (foods[i].selected) {
-                    select_foods.push(foods[i].value)
-                }
-            }
-            var data = {
-                "user_time": user_time,
-                "user_budget": user_budget,
-                "prefer_trans": prefer_trans,
-                "select_spot": select_spots,
-                "food_type": select_foods
-            };
-            $.ajax({
-                type: "post",
-                url: "../plan/",
-                data: data,
-                dataType: "json"
-            });
-        }
     </script>
 </head>
 <body>

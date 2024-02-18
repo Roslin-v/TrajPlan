@@ -8681,7 +8681,7 @@ body.admin-bar .header-menu-area.sticky_menu {
 .section-title .title:after {
   position: absolute;
   content: "";
-  background-image: url("../images/shape/bottom-bar.png");
+  background-image: url("../images/bottom-bar.png");
   height: auto;
   z-index: 10;
 }
@@ -10446,8 +10446,19 @@ ul.children {
     gap: 6px;
   }
 }
+.tour-area .location-area.style-1 ul {
+  display: flex;
+  flex-wrap: wrap;
+  list-style-type: none;
+}
 .tour-area .location-area.style-1 .portfolio-filter li {
   cursor: pointer;
+  flex-basis: 18%;
+}
+@media (max-width: 5 * 20%) {
+  .tour-area .location-area.style-1 .portfolio-filter li {
+    flex-basis: calc(100% / 5);
+  }
 }
 .tour-area .location-area.style-1 .portfolio-filter li.active {
   background-color: #3B71FE !important;

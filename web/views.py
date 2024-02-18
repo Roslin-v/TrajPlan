@@ -150,20 +150,99 @@ def diyplan(request):
 
 
 def show_spot(request):
+    code = 200001
+
+    if request.method == 'POST':
+        search_spot = request.POST.get('search')
+        if search_spot:
+            try:
+                search_result = Spot.objects.filter(name__icontains=search_spot).values('name', 'score', 'price',
+                                                                                        'description', 'pic')
+                return render(request, 'spot.html',
+                              Response(200041, {'spot': search_result, 'search': search_spot}).res2dict())
+            except:
+                code = 200040
+
     result = Spot.objects.values('name', 'score', 'price', 'description', 'pic')
-    # pages = math.ceil(len(result) / 9)
 
-    if request.method == 'GET':
-        return render(request, 'spot.html', Response(200001, {'spot': result[:9]}).res2dict())
+    return render(request, 'spot.html', Response(code, {'spot': result[:9]}).res2dict())
 
-    search_spot = request.POST.get('search')
-    if search_spot:
+
+def show_food(request):
+    code = 200001
+    category = Food.objects.values('category_id', 'category').distinct().order_by('category_id')
+    cat_double = []
+    cat_temp = []
+    cat_double.append(['厦门特色', [category[0]]])
+    for i in range(1, 3):
+        cat_temp.append(category[i])
+    cat_double.append(['海鲜', cat_temp])
+    cat_temp = []
+    for i in range(3, 19):
+        cat_temp.append(category[i])
+    cat_double.append(['地方菜系', cat_temp])
+    cat_temp = []
+    for i in range(19, 34):
+        cat_temp.append(category[i])
+    cat_double.append(['异域料理', cat_temp])
+    cat_temp = []
+    for i in range(34, 39):
+        cat_temp.append(category[i])
+    cat_double.append(['火锅', cat_temp])
+    cat_temp = []
+    for i in range(39, 42):
+        cat_temp.append(category[i])
+    cat_double.append(['烧烤', cat_temp])
+    cat_temp = []
+    for i in range(42, 49):
+        cat_temp.append(category[i])
+    cat_double.append(['其他', cat_temp])
+    cat_temp = []
+    for i in range(49, 59):
+        cat_temp.append(category[i])
+    cat_double.append(['小吃快餐', cat_temp])
+    cat_temp = []
+    for i in range(59, 61):
+        cat_temp.append(category[i])
+    cat_double.append(['饮品', cat_temp])
+    cat_temp = []
+    for i in range(61, 66):
+        cat_temp.append(category[i])
+    cat_double.append(['面包甜品', cat_temp])
+
+    if request.method == 'POST':
+        keyword = request.POST.get('keyword')
+        category_id = int(request.POST.get('state'))
+        min_price = int(request.POST.get('min'))
+        max_price = int(request.POST.get('max'))
+        search_result = []
+        result = []
         try:
-            search_result = Spot.objects.filter(name__icontains=search_spot).values('name', 'score', 'price', 'description', 'pic')
-            pages = math.ceil(len(search_result) / 9)
-            return render(request, 'spot.html', Response(200041, {'spot': search_result,
-                                                                  'search': search_spot, 'pages': pages}).res2dict())
+            if keyword and category_id != 200:
+                search_result = Food.objects.filter(name__icontains=keyword, category_id=category_id).values('name', 'score', 'price', 'category_id')
+            elif keyword:
+                search_result = Food.objects.filter(name__icontains=keyword).values('name', 'score', 'price', 'category_id')
+            elif category_id != 200:
+                search_result = Food.objects.filter(category_id=category_id).values('name', 'score', 'price', 'category_id')
+            if search_result:
+                for each in search_result:
+                    if min_price <= each['price'] <= max_price:
+                        result.append(each)
+                if result:
+                    return render(request, 'food.html', Response(200051, {'food': result, 'counts': len(result),
+                                                                          'keyword': keyword, 'state': category_id,
+                                                                          'min': min_price, 'max': max_price,
+                                                                          'category': cat_double}).res2dict())
+                else:
+                    code = 200050
         except:
-            return render(request, 'spot.html', Response(200040, {'spot': result[:9]}).res2dict())
+            code = 200050
 
-    return render(request, 'spot.html', Response(200040, {'spot': result[:9]}).res2dict())
+    result = []
+    for cat in category:
+        f = Food.objects.filter(category_id=cat['category_id']).values('name', 'score', 'price', 'category_id')
+        if len(f) > 2:
+            f = f[:2]
+        result += f
+
+    return render(request, 'food.html', Response(code, {'food': result, 'category': cat_double}).res2dict())
