@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
     <meta charset="utf-8" />
 
-    <title>鼓浪听涛-定制行程</title>
+    <title>鼓浪听涛-景点</title>
     <link rel="icon" type="image/png" href="/assets/images/logo.svg"/>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -51,27 +51,62 @@
             {% endif %}
         });
         /*
-        function nextPage() {
-            // 调整导航栏
-            cur_page = document.querySelector('.page-numbers current');
+        function changePage(order) {
+            var cur_page = document.getElementById("page" + {{data.cur}});
             cur_page.className = "page-numbers";
             cur_page.setAttribute('aria-current', "");
-            next_page = document.getElementById("page" + cur_page.id.substr(-1));
+            var index = 0;
+            // 前一页
+            if (order == 1) {
+                index = parseInt(cur_page.id.substr(-1)) - 1;
+            }
+            // 后一页
+            else if (order == 2) {
+                index = parseInt(cur_page.id.substr(-1)) + 1;
+            }
+            // 跳转页面
+            else {
+                index = document.getElementById("jump-page").value();
+                if (index<1 | index>{{data.pages}}) {
+                    swal('跳转失败', '页数错误！', 'error');
+                    return;
+                }
+            }
+            var next_page = document.getElementById("page" + index);
             next_page.className = "page-numbers current";
             next_page.setAttribute('aria-current', "page");
-            if (next_page.id.substr(-1) == {{data.pages}}) {
-                arrow_right = document.querySelector('.next page-numbers');
-                arrow_right.style.display = "none";
-
+            // 调整箭头是否显示
+            if (index == {{data.pages}}) {
+                document.querySelector('.next.page-numbers').style.display = "none";
             }
-            // 调整页面显示内容
-            for (var i=(cur_page.id.substr(-1)-1)*9, i < cur_page.id.substr(-1)*9, i++) {
-                document.getElementById("card" + i.toString()).style.display = "none";
+            if (index == 1) {
+                document.querySelector('.prev.page-numbers').style.display = "none";
             }
-            for (var i=(next_page.id.substr(-1)-1)*9, i < next_page.id.substr(-1)*9 && i < {{ data.counts }}, i++) {
-                document.getElementById("card" + i.toString()).style.display = "";
+            if (parseInt(cur_page.id.substr(-1)) == {{data.pages}}) {
+                document.querySelector('.next.page-numbers').style.display = "";
             }
-        }*/
+            if (parseInt(cur_page.id.substr(-1)) == 1) {
+                document.querySelector('.prev.page-numbers').style.display = "";
+            }
+            var data = {
+                "search": document.getElementById("search").value,
+                "page-num": index,
+                "csrfmiddlewaretoken": '{{ csrf_token }}'
+            };
+            $.ajax({
+                type: "post",
+                url: "../spot/",
+                data: data,
+                success: function(response) {
+                    // 更新页面的部分内容
+                    var index1 = response.indexOf("<!--- Single Location Start !-->", 6000);
+                    var index2 = response.indexOf("<div class=\"basic-pagination\">", 6000) - 90;
+                    var card_area = document.getElementById("card-area");
+                    card_area.innerHTML = response.substr(index1, index2);
+                }
+            });
+        }
+        */
     </script>
 </head>
 <body>
@@ -148,12 +183,12 @@
                             <form class="search-form" action="#" method="post">
                                 {% csrf_token %}
                                 {% if code == 200041 %}
-                                <input name="search" type="text" placeholder="{{ data.search }}"/>
+                                <input id="search" name="search" type="text" placeholder="{{ data.search }}"/>
                                 {% else %}
-                                <input name="search" type="text" placeholder="搜索..."/>
+                                <input id="search" name="search" type="text" placeholder="搜索..."/>
                                 {% endif %}
+                                <button type="submit" title="search-btn"><i class="icon-search"></i></button>
                             </form>
-                            <button type="submit"><i class="icon-search"></i></button>
                         </div>
                     </div>
                 </div>
@@ -167,11 +202,12 @@
         <div class="location-area style-1">
             <div class="container">
                 <div class="isotope-grid">
-                    <div class="row gy-4">
+                    <div id="card-area" class="row gy-4">
+                        page_num {{data.page_num}}
                         {% for s in data.spot %}
                         <!--- Single Location Start !-->
                         <div class="col-lg-4 col-md-6 masonry-portfolio-item resort beach wow fadeInUp" data-wow-delay="0s">
-                            <div id="card{{loop.index}}" class="location-card style-2">
+                            <div class="location-card style-2">
                                 <div class="image-wrapper">
                                     <img src="/assets/images/{{s.pic}}" alt="Location Image">
                                     <div class="rating">
@@ -206,15 +242,12 @@
                         {% endfor %}
                     </div>
                 </div>
+                <!--
                 <div class="basic-pagination">
                     <ul class="justify-content-center">
-                        <li><a class="prev page-numbers" href="#"><i class="fa fa-arrow-left"></i></a></li>
-                        <li><span id="page{{p}}" class="page-numbers">{{ p }}</span></li>
-                        <li><span id="page{{data.pages}}" class="page-numbers">{{ data.pages }}</span></li>
-                        <li><span id="pagedot" class="page-numbers dots">…</span></li>
-                        <li><a class="next page-numbers" href="#"><i class="fa fa-arrow-right"></i></a></li>
                     </ul>
                 </div>
+                !-->
             </div>
         </div>
     </div>
@@ -312,9 +345,35 @@
     <!-- Scroll Up Section End -->
 
     <script>
-        //first_page = document.getElementById("page1");
-        //first_page.setAttribute('aria-current', "page");
-        //first_page.className = "page-numbers current";
+        /*
+        function addLi() {
+            var ul = document.querySelector(".justify-content-center");
+            var str = "";
+            if ({{data.pages}}>1) {
+                str += "<li><a class='prev page-numbers' onclick='changePage(1)'><i class='fa fa-arrow-left'></i></a></li>"
+            }
+            else {
+                str += "<li style='display: \'none\''><a class='prev page-numbers' onclick='changePage(2)'><i class='fa fa-arrow-left'></i></a></li>"
+            }
+            str += "<li><span id='page1' class='page-numbers'>1</span></li>";
+            if ({{data.pages}}>1) {
+                for (var i=2; i<={{data.pages}}&&i<=3; i++) {
+                    str += ("<li><span id='page" + i + "' class='page-numbers'>" + i + "</span></li>");
+                }
+                if ({{data.pages}}>3) {
+                    str += "<li><span id='pagedot' class='page-numbers dots'>…</span></li>";
+                }
+                str += "<li><a class='next page-numbers' onclick='changePage(2)'><i class='fa fa-arrow-right'></i></a></li>";
+                str += "<li><input id='jump-page' name='jump-page' type='number' placeholder='页数' style='width:60px;'/></li>"
+                str += "<li><button class='theme-btn' type='button' onClick='changePage(3)'>跳转</button></li>"
+            }
+            ul.innerHTML = str;
+            var cur_page = document.getElementById("page" + {{data.cur}});
+            cur_page.className = "page-numbers current";
+            cur_page.setAttribute('aria-current', "page");
+        }
+        addLi();
+        */
     </script>
 </body>
 </html>
