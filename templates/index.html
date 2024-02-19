@@ -89,10 +89,9 @@
                                         <ul class="submenu">
                                             <li><a href="../spot">景点</a></li>
                                             <li><a href="../food">美食</a></li>
-                                            <li><a href="../transportation">交通</a></li>
+                                            <li><a href="../suggestion">攻略</a></li>
                                         </ul>
                                     </li>
-                                    <li><a href="../suggestion">旅游攻略</a></li>
                                     <li><a href="../plan">定制行程</a></li>
                                     <li><a href="../about">关于</a></li>
                                     {% if request.session.is_login %}
@@ -178,7 +177,7 @@
                 <div class="location-card style-1 wow fadeInUp" data-wow-delay="0s">
                     <div class="image-wrapper">
                         <a class="image-inner" href="../spot">
-                            <img src="/assets/images/location-card/image-1.jpg" alt="Location Image">
+                            <img src="/assets/images/{{ s.pic }}" alt="Location Image">
                         </a>
                         <div class="rating">
                             <div class="ratting-inner">
@@ -247,13 +246,13 @@
                                 <a href="../about" class="theme-btn">了解更多</a>
                                 <div class="meta-user">
                                     <a href="#" class="image-inner">
-                                        <img src="/assets/images/meta-user/meta-user-1.jpg" alt="User">
+                                        <img src="/assets/images/meta-user-1.jpg" alt="User">
                                     </a>
                                     <a href="#" class="image-inner">
-                                        <img src="/assets/images/meta-user/meta-user-2.jpg" alt="User">
+                                        <img src="/assets/images/meta-user-2.jpg" alt="User">
                                     </a>
                                     <a href="#" class="image-inner">
-                                        <img src="/assets/images/meta-user/meta-user-3.jpg" alt="User">
+                                        <img src="/assets/images/meta-user-3.jpg" alt="User">
                                     </a>
                                     <a href="#" class="image-inner">
                                         <i class="fa-solid fa-plus"></i>
@@ -270,13 +269,13 @@
                         <div class="about-us-image-wrapper-1">
                             <img class="bg-shape" src="/assets/images/image-wrapper-bg-1.png" alt="Shape">
                             <div class="image-wrapper style-1">
-                                <img src="/assets/images/about-us-area/img-1.jpg" alt=" Vacation Image">
+                                <img src="/assets/images/img-1.jpg" alt=" Vacation Image">
                             </div>
                             <div class="image-wrapper style-2">
-                                <img src="/assets/images/about-us-area/img-2.jpg" alt=" Vacation Image">
+                                <img src="/assets/images/img-2.jpg" alt=" Vacation Image">
                             </div>
                             <div class="image-wrapper style-3">
-                                <img src="/assets/images/about-us-area/img-3.jpg" alt=" Vacation Image">
+                                <img src="/assets/images/img-3.jpg" alt=" Vacation Image">
                             </div>
                         </div>
                     </div>
@@ -301,33 +300,36 @@
                 </div>
             </div>
             <div class="row gy-4">
+                {% for s in data.suggestion %}
                 <!--- Single Location Start !-->
                 <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0s">
                     <div class="location-card style-2">
                         <div class="image-wrapper">
                             <div class="image-inner">
-                                <a href="tour-details.html"><img src="/assets/images/location-card/image-5.jpg" alt="Location Image"></a>
+                                <a href="../suggestion?id={{s.id}}"><img src="/assets/images/suggestion{{s.id}}.jpg" alt="Location Image"  style="height: 250px;"></a>
                             </div>
                             <div class="rating">
                                 <div class="ratting-inner">
                                      <span><i class="fa-solid fa-star"></i></span>
-                                    <span class="counter">3.5</span>
+                                    <span class="counter">5.0</span>
                                 </div>
                             </div>
                             <a href="#" class="favourite-icon active"><i class="fa-solid fa-heart"></i></a>
                         </div>
                         <div class="content-wrapper">
                             <div class="content-inner">
-                                <span class="price">$62.24</span>
-                                <h3 class="content-title"><a href="tour-details.html">Asian discovery</a></h3>
+                                <h3 class="content-title"><a>{{s.name}}</a></h3>
                                 <div class="time-zone">
+                                    <div class="time-zone-inner" style="margin-bottom: -20px;">
+                                        <h5 class="price">人均：{{s.price}}元</h5>
+                                    </div>
                                     <div class="time-zone-inner">
-                                       <i class="fa-solid fa-location-dot"></i>
-                                        <p class="title">Agoda, surulere lagos</p>
+                                        <i class="fa-solid fa-location-dot"></i>
+                                        <p class="title">{{ s.spot }}等</p>
                                     </div>
                                     <div class="time-zone-inner">
                                         <i class="fa-solid fa-clock"></i>
-                                        <p class="title">4 Days</p>
+                                        <p class="title">{{ s.day }}天</p>
                                     </div>
                                 </div>
                             </div>
@@ -335,176 +337,7 @@
                     </div>
                 </div>
                 <!--- Single Location End !-->
-                <!--- Single Location Start !-->
-                <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".4s">
-                    <div class="location-card style-2">
-                        <div class="image-wrapper">
-                            <div class="image-inner">
-                                <a href="tour-details.html"><img src="/assets/images/location-card/image-6.jpg" alt="Location Image"></a>
-                            </div>
-                            <div class="rating">
-                                <div class="ratting-inner">
-                                    <span><i class="fa-solid fa-star"></i></span>
-                                    <span class="counter">3.5</span>
-                                </div>
-                            </div>
-                            <a href="#" class="favourite-icon"><i class="fa-solid fa-heart"></i></a>
-                        </div>
-                        <div class="content-wrapper">
-                            <div class="content-inner">
-                                <Span class="price">$64.48</span>
-                                <h3 class="content-title"><a href="tour-details.html">Mountain hiking tour</a></h3>
-                                <div class="time-zone">
-                                    <div class="time-zone-inner">
-                                       <i class="fa-solid fa-location-dot"></i>
-                                        <p class="title">Agoda, surulere lagos</p>
-                                    </div>
-                                    <div class="time-zone-inner">
-                                        <i class="fa-solid fa-clock"></i>
-                                        <p class="title">4 Days</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!--- Single Location End !-->
-                <!--- Single Location Start !-->
-                <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".8s">
-                    <div class="location-card style-2">
-                        <div class="image-wrapper">
-                            <div class="image-inner">
-                                <a href="tour-details.html"><img src="/assets/images/location-card/image-7.jpg" alt="Location Image"></a>
-                            </div>
-                            <div class="rating">
-                                <div class="ratting-inner">
-                                    <span><i class="fa-solid fa-star"></i></span>
-                                    <span class="counter">3.5</span>
-                                </div>
-                            </div>
-                            <a href="#" class="favourite-icon active"><i class="fa-solid fa-heart"></i></a>
-                        </div>
-                        <div class="content-wrapper">
-                            <div class="content-inner">
-                                <h5 class="price">$66.62</h5>
-                                <span class="content-title"><a href="tour-details.html">Adventure maldivs</a></span>
-                                <div class="time-zone">
-                                    <div class="time-zone-inner">
-                                       <i class="fa-solid fa-location-dot"></i>
-                                        <p class="title">Agoda, surulere lagos</p>
-                                    </div>
-                                    <div class="time-zone-inner">
-                                        <i class="fa-solid fa-clock"></i>
-                                        <p class="title">4 Days</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!--- Single Location End !-->
-                <!--- Single Location Start !-->
-                <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".8s">
-                    <div class="location-card style-2">
-                        <div class="image-wrapper">
-                            <div class="image-inner">
-                                <a href="tour-details.html"><img src="/assets/images/location-card/image-8.jpg" alt="Location Image"></a>
-                            </div>
-                            <div class="rating">
-                                <div class="ratting-inner">
-                                    <span><i class="fa-solid fa-star"></i></span>
-                                    <span class="counter">3.5</span>
-                                </div>
-                            </div>
-                            <a href="#" class="favourite-icon"><i class="fa-solid fa-heart"></i></a>
-                        </div>
-                        <div class="content-wrapper">
-                            <div class="content-inner">
-                                <h5 class="price">$74.66</h5>
-                                <h3 class="content-title"><a href="tour-details.html">The minimalist sea</a></h3>
-                                <div class="time-zone">
-                                    <div class="time-zone-inner">
-                                       <i class="fa-solid fa-location-dot"></i>
-                                        <p class="title">Agoda, surulere lagos</p>
-                                    </div>
-                                    <div class="time-zone-inner">
-                                        <i class="fa-solid fa-clock"></i>
-                                        <p class="title">4 Days</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!--- Single Location End !-->
-                <!--- Single Location Start !-->
-                <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="1.2s">
-                    <div class="location-card style-2">
-                        <div class="image-wrapper">
-                            <div class="image-inner">
-                                <a href="tour-details.html"><img src="/assets/images/location-card/image-9.jpg" alt="Location Image"></a>
-                            </div>
-                            <div class="rating">
-                                <div class="ratting-inner">
-                                    <span><i class="fa-solid fa-star"></i></span>
-                                    <span class="counter">3.5</span>
-                                </div>
-                            </div>
-                            <a href="#" class="favourite-icon active"><i class="fa-solid fa-heart"></i></a>
-                        </div>
-                        <div class="content-wrapper">
-                            <div class="content-inner">
-                                <h5 class="price">$72.28</h5>
-                                <h3 class="content-title"><a href="tour-details.html">Antique europe</a></h3>
-                                <div class="time-zone">
-                                    <div class="time-zone-inner">
-                                       <i class="fa-solid fa-location-dot"></i>
-                                        <p class="title">Agoda, surulere lagos</p>
-                                    </div>
-                                    <div class="time-zone-inner">
-                                        <i class="fa-solid fa-clock"></i>
-                                        <p class="title">4 Days</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!--- Single Location End !-->
-                <!--- Single Location Start !-->
-                <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="1.6s">
-                    <div class="location-card style-2">
-                        <div class="image-wrapper">
-                            <div class="image-inner">
-                                <a href="tour-details.html"><img src="/assets/images/location-card/image-10.jpg" alt="Location Image"></a>
-                            </div>
-                            <div class="rating">
-                                <div class="ratting-inner">
-                                    <span><i class="fa-solid fa-star"></i></span>
-                                    <span class="counter">3.5</span>
-                                </div>
-                            </div>
-                            <a href="#" class="favourite-icon"><i class="fa-solid fa-heart"></i></a>
-                        </div>
-                        <div class="content-wrapper">
-                            <div class="content-inner">
-                                <h5 class="price">$68.44</h5>
-                                <h3 class="content-title"><a href="tour-details.html">Awesome island</a></h3>
-                                <div class="time-zone">
-                                    <div class="time-zone-inner">
-                                       <i class="fa-solid fa-location-dot"></i>
-                                        <p class="title">Agoda, surulere lagos</p>
-                                    </div>
-                                    <div class="time-zone-inner">
-                                        <i class="fa-solid fa-clock"></i>
-                                        <p class="title">4 Days</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!--- Single Location End !-->
+                {% endfor %}
             </div>
         </div>
     </div>

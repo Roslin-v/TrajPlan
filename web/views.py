@@ -1,8 +1,4 @@
-import math
-
-from django.http import HttpResponseRedirect
 from django.shortcuts import render, HttpResponse, redirect
-from django.urls import reverse
 from model.train import predict
 from model.algorithm import PlanManager
 from model.parser import get_args
@@ -16,8 +12,11 @@ plan_manager = PlanManager()
 
 
 def index(request):
-    spot = Spot.objects.values('name', 'score')[:9]
-    return render(request, 'index.html', Response(200001, {'spot': spot}).res2dict())
+    spot = Spot.objects.values('name', 'score', 'pic')[:9]
+    suggestions = [{'id': 1, 'name': '厦门精华一日游', 'price': 229, 'spot': '鼓浪屿-日光岩-菽庄花园-中山路', 'day': 1},
+                   {'id': 2, 'name': '厦门度假三日游', 'price': 639, 'spot': '鼓浪屿-中山路-厦大-环岛路-集美学村', 'day': 3},
+                   {'id': 3, 'name': '厦门休闲四日游', 'price': 989, 'spot': '鼓浪屿-中山路-厦大-集美学村-植物园', 'day': 4}]
+    return render(request, 'index.html', Response(200001, {'spot': spot, 'suggestion': suggestions}).res2dict())
 
 
 def login(request):
