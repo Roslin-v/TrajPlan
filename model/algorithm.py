@@ -210,7 +210,9 @@ class PlanManager:
             self.constraint['select-spot'] = new_pois
 
     def ant_colony(self):
-        nodes = self.constraint['select-spot']
+        nodes = []
+        for each in self.constraint['select-spot']:
+            nodes.append(each)
         nodes.append(10000)      # 增加一个虚拟点
         node_count = len(nodes)  # 节点数量
         # POI ID转为索引
@@ -389,6 +391,9 @@ class PlanManager:
             for each in self.plan[key]:
                 plan_fee += each[4]
         self.constraint['all-budget'] = plan_fee
+        if len(self.plan) < (self.constraint['user-time'] / 24):
+            for i in range(len(self.plan) + 1, int(self.constraint['user-time'] / 24) + 1):
+                self.plan[i] = []
 
     def print_plan(self):
         for key in self.plan:
@@ -426,8 +431,11 @@ class PlanManager:
         for key in self.plan:
             p = self.plan[key]
             temp_p = []
+            names = ""
             for each in p:
                 if int(each[0] / 10000) == 1:    # 景点
+                    names += each[1]
+                    names += '-'
                     time_str = str(math.floor(each[2]))
                     if math.floor(each[2]) != each[2]:
                         time_str += ':30-'
@@ -441,10 +449,10 @@ class PlanManager:
                     if str(self.spot_feat[each[0]-10001][11]) != 'nan':
                         temp_p.append([1, each[1], time_str, int(each[4]), self.spot_feat[each[0]-10001][11], self.spot_feat[each[0]-10001][12]])
                     else:
-                        temp_p.append([1, each[1], time_str, int(each[4]), None])
+                        temp_p.append([1, each[1], time_str, int(each[4]), None, self.spot_feat[each[0]-10001][12]])
                 else:   # 餐厅
                     temp_p.append([2, each[1], each[2], each[3], each[4]])
-            self.plan_print.append([key, temp_p])
+            self.plan_print.append([key, names[:-1], temp_p])
 
     def recommend_food(self, point1, point2, decadence, position=False):
         distance = []
@@ -521,7 +529,6 @@ class PlanManager:
             # 在这之外的情况 中间是否能插入
             else:
                 point1 = np.array([self.spot_feat[p[lunch_index][0] - 10001][6], self.spot_feat[p[lunch_index][0] - 10001][7]])
-            # 考虑类别，排除203冰激淋 219酒吧 220居酒屋 221咖啡店 228零食 232 233面包 250卤味 256西式快餐 257甜点 260小吃 265饮品
             if self.spot_feat[p[lunch_index - 1][0] - 10001][0] == 10001 or self.spot_feat[p[lunch_index - 1][0] - 10001][10] == 10001 or self.spot_feat[p[lunch_index][0] - 10001][0] == 10001 or self.spot_feat[p[lunch_index][0] - 10001][10] == 10001:
                 food_choose = self.recommend_food(point1, point2, (1 - (len(self.plan) - key) / len(self.plan)), True)
             else:
@@ -748,10 +755,9 @@ class PlanManager:
                     else:
                         taxi_dis = self.trans['taxi'][index][0]
                         if taxi_dis > 1000:
-                            temp_t.append([3, str(round((taxi_dis / 1000), 2)) + '千米', self.trans['taxi'][index][1], self.trans['taxi'][index][2]])
-                            print('%.2f km' % (taxi_dis / 1000))
+                            temp_t.append([3, str(round((taxi_dis / 1000), 2)) + '千米', int(self.trans['taxi'][index][1]), self.trans['taxi'][index][2]])
                         else:
-                            temp_t.append([3, str(taxi_dis) + '米', self.trans['taxi'][index][1], self.trans['taxi'][index][2]])
+                            temp_t.append([3, str(taxi_dis) + '米', int(self.trans['taxi'][index][1]), self.trans['taxi'][index][2]])
                     day_t.append([start[1], terminal[1], temp_t])
                     start = terminal
                     index += 1

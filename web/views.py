@@ -112,7 +112,8 @@ def diyplan(request):
         c_id = Food.objects.filter(category=str(each)).first().category_id
         if c_id in lunch_no:
             lunch_no.remove(c_id)
-    l = [203, 219, 220, 221, 228, 232, 233, 250, 256, 257, 260, 265]
+    # 考虑类别，排除203冰激淋 219酒吧 220居酒屋 221咖啡店 228零食 232 233面包 250卤味 256西式快餐 257甜点 260小吃 265饮品
+    l = [250, 254, 255, 257, 259, 260, 261, 262, 263, 264, 265, 243]
     for each in l:
         lunch_no.add(each)
     args = get_args()

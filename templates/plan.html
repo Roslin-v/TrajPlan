@@ -242,14 +242,16 @@
                                                 <div class="accordion-list-item">
                                                     <div id="heading{{p.0}}">
                                                         <div class="accordion-head"  role="button" data-bs-toggle="collapse" data-bs-target="#collapse{{p.0}}" aria-expanded="true" aria-controls="collapse{{p.0}}">
-                                                            <h3 class="accordion-title">DAY {{ p.0 }}</h3>
+                                                            <h3 class="accordion-title">
+                                                                DAY {{ p.0 }}&emsp;&emsp; {{ p.1 }}
+                                                            </h3>
                                                         </div>
                                                     </div>
                                                     <div id="collapse{{p.0}}" role="button" class="accordion-collapse collapse show" aria-labelledby="heading{{p.0}}" data-bs-parent="#appointmentAreaStyle1FAQ">
                                                         <div class="accordion-item-body">
                                                             <div class="destination-details sidebar widget widget_latest_post">
                                                             <ul>
-                                                            {% for each in p.1 %}
+                                                            {% for each in p.2 %}
                                                                 {% if each.0 == 1 %}
                                                                 <li>
                                                                     <div class="latest-post-thumb">
@@ -324,17 +326,20 @@
                                                                     <div class="latest-post-desc">
                                                                         <h3 class="latest-post-title">从{{ each.0 }}到{{ each.1 }}</h3>
                                                                         {% for way in each.2 %}
-                                                                        {% if way.0 == 1 %}
-                                                                        <span class="latest-post-meta">步行{{ way.1 }}  预计用时{{ way.2 }}分钟</span>
-                                                                        {% elif way.0 == 2 %}
-                                                                        <span class="latest-post-meta">乘坐{{ way.1 }}  预计用时{{ way.6 }}分钟</span>
-                                                                        <span class="latest-post-meta">从{{ way.2 }}坐{{ way.3 }}到达{{ way.4 }}</span>
-                                                                        {% if way.5 %}
-                                                                        <span class="latest-post-meta">途径{{ way.5 }}</span>
-                                                                        {% endif %}
-                                                                        {% else %}
-                                                                        <span class="latest-post-meta">打的{{ way.1 }}  预计用时{{ way.2 }}分钟  预计花费{{ way.3 }}元</span>
-                                                                        {% endif %}
+                                                                        <div>
+                                                                            <i class="fa-solid fa-location-dot" style="display:inline-block;"></i>
+                                                                            {% if way.0 == 1 %}
+                                                                            <span class="latest-post-meta" style="display:inline-block;">步行{{ way.1 }}  预计用时{{ way.2 }}分钟</span>
+                                                                            {% elif way.0 == 2 %}
+                                                                            <span class="latest-post-meta" style="display:inline-block;">乘坐{{ way.1 }}  预计用时{{ way.6 }}分钟</span>
+                                                                            <span class="latest-post-meta">从{{ way.2 }}坐{{ way.3 }}到达{{ way.4 }}</span>
+                                                                            {% if way.5 %}
+                                                                            <span class="latest-post-meta">途径{{ way.5 }}</span>
+                                                                            {% endif %}
+                                                                            {% else %}
+                                                                            <span class="latest-post-meta" style="display:inline-block;">打的{{ way.1 }}  预计用时{{ way.2 }}分钟  预计花费{{ way.3 }}元</span>
+                                                                            {% endif %}
+                                                                        </div>
                                                                         {% endfor %}
                                                                     </div>
                                                                 </li>
