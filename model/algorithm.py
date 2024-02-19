@@ -127,6 +127,7 @@ class PlanManager:
         self.trans = {'bus': [], 'taxi': [], 'walk': []}
         self.trans_print = []
         self.score = 0
+        self.expand_day = False
         self.spot_feat = load_poi_features('./data/spot.csv')
         self.food_feat = load_poi_features('./data/food.csv')
 
@@ -139,6 +140,7 @@ class PlanManager:
         self.trans = {'bus': [], 'taxi': [], 'walk': []}
         self.trans_print = []
         self.score = 0
+        self.expand_day = False
 
     def knapsack(self, budgets, times, B, T):
         # ========== 获取背包的各项初始化数据
@@ -392,8 +394,7 @@ class PlanManager:
                 plan_fee += each[4]
         self.constraint['all-budget'] = plan_fee
         if len(self.plan) < (self.constraint['user-time'] / 24):
-            for i in range(len(self.plan) + 1, int(self.constraint['user-time'] / 24) + 1):
-                self.plan[i] = []
+            self.expand_day = True
 
     def print_plan(self):
         for key in self.plan:

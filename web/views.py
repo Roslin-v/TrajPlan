@@ -132,9 +132,10 @@ def diyplan(request):
     try:
         plan_manager.check_constraint()
         plan_manager.ant_colony()
-        if plan_manager.constraint['all-time'] < plan_manager.constraint['user-time'] and plan_manager.constraint['all-budget'] < plan_manager.constraint['user-budget'] / 2:
+        if plan_manager.constraint['all-time'] < plan_manager.constraint['user-time'] / 2 and plan_manager.constraint[
+            'all-budget'] < plan_manager.constraint['user-budget'] / 2:
             plan_manager.plan, plan_manager.constraint = predict(args, 1, plan_manager.plan,
-                                                                 plan_manager.constraint)
+                                                                 plan_manager.constraint, plan_manager.expand_day)
         plan_manager.improve_plan()
         plan_manager.get_trans()
         plan_manager.get_plan_print()

@@ -452,7 +452,7 @@ def train(args):
             print(f'train_epochs_mrr_list={[float(f"{each:.4f}") for each in train_epochs_mrr_list]}', file=f)
 
 
-def predict(args, cur_user, plan, constraint):
+def predict(args, cur_user, plan, constraint, expand_day):
     # ========== 加载模型
     raw_X = load_poi_features(args.data_node_feats)[:, 0:-2]
     num_pois = raw_X.shape[0]
@@ -563,81 +563,89 @@ def predict(args, cur_user, plan, constraint):
     batch_seq_embeds = []
     poi_embeddings = poi_embed_model(X, A)
 
-    # 对于全空的一天，先插入一个热门景点
     interest = load_matrix('./data/interest.csv')[:, 1]
     interest_sort = sorted(range(len(interest)), key=lambda k: interest[k], reverse=True)
-    for key in plan:
-        if len(plan[key]) == 0:
+
+    while True:
+        # 对于全空的一天，先插入一个热门景点
+        if expand_day:
+            temp_len = len(plan)
             for each in interest_sort:
                 if (each + 10001) not in constraint['select-spot'] and raw_X[each][10] not in constraint['select-spot'] and raw_X[each][9] == 0:
                     constraint['select-spot'].append(each + 10001)
                     constraint['all-budget'] += raw_X[each][5]
-                    plan[key].append([each + 10001, raw_X[each][1], 9, 9 + raw_X[each][8], raw_X[each][5]])
+                    plan[temp_len+1] = [[each + 10001, raw_X[each][1], 9, 9 + raw_X[each][8], raw_X[each][5]]]
                     break
 
-    # 切割batch
-    # plan: {day1: id, name, start_time, end_time}
-    # sample: user, [(poi, time),()]
-    batch = []
-    sample = [cur_user]
-    poi_time = []
-    plan_poi = {}
-    for key in plan:
-        p = plan[key]
-        plan_poi[key] = [0, []]   # {day1: 是否需要补充行程, [已有poi]}
-        for each in p:
-            plan_poi[key][1].append(each[0])
-            poi_time.append((poi_id_dict[each[0]], each[2] * 2 / 48))
-        sample.append(poi_time)
-        if p[-1][-2] < 18:  # 结束时间小于18点
-            plan_poi[key][0] = 1
-            batch.append(sample)
+        # 切割batch
+        # plan: {day1: id, name, start_time, end_time}
+        # sample: user, [(poi, time),()]
+        batch = []
         sample = [cur_user]
         poi_time = []
-    need = True
-    while need:
-        for sample in batch:
-            input_seq = [each[0] for each in sample[1]]
-            input_seq_embed = torch.stack(input_traj_to_embeddings(sample, poi_embeddings))
-            batch_seq_embeds.append(input_seq_embed)
-            batch_seq_lens.append(len(input_seq))
-            batch_input_seqs.append(input_seq)
-        batch_padded = pad_sequence(batch_seq_embeds, batch_first=True, padding_value=-1)
-        x = batch_padded.to(device=args.device, dtype=torch.float)
-        src_mask = seq_model.generate_square_subsequent_mask(x.shape[0]).to(args.device)
-        y_pred_poi, y_pred_time, y_pred_cat = seq_model(x, src_mask)
-        y_pred_poi_adjusted = adjust_pred_prob_by_graph(y_pred_poi)     # need_day * poi * 313
-        index = 0
-        for key in plan_poi:
-            if plan_poi[key][0] == 1:     # 如果需要补充行程
-                sorted_id = sorted(range(len(y_pred_poi_adjusted[index][-1])), key=lambda k: y_pred_poi_adjusted[index][-1][k])
-                for j in sorted_id:
-                    # 如果该景点没有已选+该景点所在的地区没有已选（已经去过鼓浪屿，第二天不会再去日光岩）+白天晚上时间约束+预算满足
-                    if (j + 10001) not in constraint['select-spot'] and (
-                            raw_X[j][10] not in constraint['select-spot'] or plan[key][-1][0] == raw_X[j][10] or
-                            raw_X[plan[key][-1][0] - 10001][10] == raw_X[j][10]) and (
-                            (plan[key][-1][-2] + 1) < 16 or ((plan[key][-1][-2] + 1) >= 16 and raw_X[j][9] == 1)) and (
-                            raw_X[j][5] + constraint['all-budget']) <= constraint['user-budget']:
-                        plan_poi[key][1].append(j + 10001)
-                        if raw_X[plan[key][-1][0]-10001][10] in constraint['select-spot'] and raw_X[j][10] != raw_X[plan[key][-1][0]-10001][10] and (j+10001) != raw_X[plan[key][-1][0]-10001][10]:
-                            temp_index = 0
-                            for i in range(len(plan[key])):
-                                if plan[key][i][0] == raw_X[plan[key][-1][0]-10001][10]:
-                                    temp_index = i
-                                    break
-                            plan[key].append([j + 10001, raw_X[j][1], plan[key][temp_index][-2] + 1, plan[key][temp_index][-2] + 1 + raw_X[j][8], raw_X[j][5]])
-                        else:
-                            plan[key].append([j + 10001, raw_X[j][1], plan[key][-1][-2] + 1, plan[key][-1][-2] + 1 + raw_X[j][8], raw_X[j][5]])
-                        constraint['all-budget'] += raw_X[j][5]
-                        constraint['select-spot'].append(j + 10001)
-                        batch[index][1].append((poi_id_dict[j + 10001], (plan[key][-1][-2] + 1 + raw_X[j][8])*2/48))
-                        if plan[key][-1][-2] > 18:
-                            plan_poi[key][0] = 0
-                        break
-                index += 1
-        need = False
-        for key in plan_poi:
-            if plan_poi[key][0] == 1:
-                need = True
-                break
+        plan_poi = {}
+        for key in plan:
+            p = plan[key]
+            plan_poi[key] = [0, []]   # {day1: 是否需要补充行程, [已有poi]}
+            for each in p:
+                plan_poi[key][1].append(each[0])
+                poi_time.append((poi_id_dict[each[0]], each[2] * 2 / 48))
+            sample.append(poi_time)
+            if p[-1][-2] < 18:  # 结束时间小于18点
+                plan_poi[key][0] = 1
+                batch.append(sample)
+            sample = [cur_user]
+            poi_time = []
+
+        # 预测下一个景点
+        need = True
+        while need:
+            for sample in batch:
+                input_seq = [each[0] for each in sample[1]]
+                input_seq_embed = torch.stack(input_traj_to_embeddings(sample, poi_embeddings))
+                batch_seq_embeds.append(input_seq_embed)
+                batch_seq_lens.append(len(input_seq))
+                batch_input_seqs.append(input_seq)
+            batch_padded = pad_sequence(batch_seq_embeds, batch_first=True, padding_value=-1)
+            x = batch_padded.to(device=args.device, dtype=torch.float)
+            src_mask = seq_model.generate_square_subsequent_mask(x.shape[0]).to(args.device)
+            y_pred_poi, y_pred_time, y_pred_cat = seq_model(x, src_mask)
+            y_pred_poi_adjusted = adjust_pred_prob_by_graph(y_pred_poi)     # need_day * poi * 313
+            index = 0
+            for key in plan_poi:
+                if plan_poi[key][0] == 1:     # 如果需要补充行程
+                    sorted_id = sorted(range(len(y_pred_poi_adjusted[index][-1])), key=lambda k: y_pred_poi_adjusted[index][-1][k])
+                    for j in sorted_id:
+                        # 如果该景点没有已选+该景点所在的地区没有已选（已经去过鼓浪屿，第二天不会再去日光岩）+白天晚上时间约束+预算满足
+                        if (j + 10001) not in constraint['select-spot'] and (
+                                raw_X[j][10] not in constraint['select-spot'] or plan[key][-1][0] == raw_X[j][10] or
+                                raw_X[plan[key][-1][0] - 10001][10] == raw_X[j][10]) and (
+                                (plan[key][-1][-2] + 1) < 16 or ((plan[key][-1][-2] + 1) >= 16 and raw_X[j][9] == 1)) and (
+                                raw_X[j][5] + constraint['all-budget']) <= constraint['user-budget']:
+                            plan_poi[key][1].append(j + 10001)
+                            if raw_X[plan[key][-1][0]-10001][10] in constraint['select-spot'] and raw_X[j][10] != raw_X[plan[key][-1][0]-10001][10] and (j+10001) != raw_X[plan[key][-1][0]-10001][10]:
+                                temp_index = 0
+                                for i in range(len(plan[key])):
+                                    if plan[key][i][0] == raw_X[plan[key][-1][0]-10001][10]:
+                                        temp_index = i
+                                        break
+                                plan[key].append([j + 10001, raw_X[j][1], plan[key][temp_index][-2] + 1, plan[key][temp_index][-2] + 1 + raw_X[j][8], raw_X[j][5]])
+                            else:
+                                plan[key].append([j + 10001, raw_X[j][1], plan[key][-1][-2] + 1, plan[key][-1][-2] + 1 + raw_X[j][8], raw_X[j][5]])
+                            constraint['all-budget'] += raw_X[j][5]
+                            constraint['select-spot'].append(j + 10001)
+                            batch[index][1].append((poi_id_dict[j + 10001], (plan[key][-1][-2] + 1 + raw_X[j][8])*2/48))
+                            if plan[key][-1][-2] > 18:
+                                plan_poi[key][0] = 0
+                            break
+                    index += 1
+            need = False
+            for key in plan_poi:
+                if plan_poi[key][0] == 1:
+                    need = True
+                    break
+
+        if len(plan) == int(constraint['user-time'] / 24):
+            break
+
     return plan, constraint
