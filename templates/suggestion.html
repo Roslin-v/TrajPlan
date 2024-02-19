@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+    <meta charset="utf-8" />
+
+    <title>鼓浪听涛-攻略</title>
+    <link rel="icon" type="image/png" href="/assets/images/logo.svg"/>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fasthand&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- <link rel="stylesheet" href="/assets/vendor/select2/dist//assets/css/select2.min.css"/> -->
+
+    <link rel="stylesheet" href="/assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/assets/css/fontawesome.min.css" />
+    <link rel="stylesheet" href="/assets/css/magnific-popup.css" />
+    <link rel="stylesheet" href="/assets/css/slick.css" />
+    <link rel="stylesheet" href="/assets/css/meanmenu.css" />
+    <link rel="stylesheet" href="/assets/css/nice-select.css" />
+    <link rel="stylesheet" href="/assets/css/animate.css" />
+    <link rel="stylesheet" href="/assets/css/style.css" />
+    <link rel="stylesheet" href="/assets/css/multiple-select.min.css" />
+    <link rel="stylesheet" type="text/css" href="/assets/css/sweetalert.css">
+
+    <script type="text/javascript" src="/assets/js/sweetalert-dev.js"></script>
+    <script src="/assets/js/jquery.min.js"></script>
+    <script src="/assets/js/jquery.nice-select.min.js"></script>
+    <script src="/assets/js/slick.min.js"></script>
+    <script src="/assets/js/jquery.counterup.min.js"></script>
+    <script src="/assets/js/waypoints.js"></script>
+    <script src="/assets/js/jquery.meanmenu.min.js"></script>
+    <script src="/assets/js/jquery.magnific-popup.min.js"></script>
+    <script src="/assets/js/inview.min.js"></script>
+    <script src="/assets/js/wow.js"></script>
+    <script src="/assets/js/tilt.jquery.js"></script>
+    <script src="/assets/js/isotope.min.js"></script>
+    <script src="/assets/js/jquery.imagesloaded.min.js"></script>
+    <script src="/assets/js/select2.min.js"></script>
+    <script src="/assets/js/jquery-ui.min.js"></script>
+    <script src="/assets/js/custom.js"></script>
+    <script src="/assets/js/bootstrap.min.js"></script>
+    <script src="/assets/js/multiple-select.min.js"></script>
+
+</head>
+<body>
+    <!-- Preloader Start !-->
+    <div id="preloader">
+        <div id="preloader-status">
+            <img src="/assets/images/preloader.gif" alt="Preloader">
+        </div>
+    </div>
+    <!-- Preloader End !-->
+
+    <!-- Header Start !-->
+    <header class="header-area style-1">
+        <!-- Header Nav Menu Start -->
+        <div class="header-menu-area sticky-header">
+            <div class="container">
+                <div class="row">
+                    <div class="col-xl-2 col-lg-2 col-md-6 col-6 d-flex align-items-center">
+                        <div class="logo">
+                            <a href="../index" class="standard-logo" style="width:75px;">
+                                <img src="/assets/images/logo.svg" alt="logo" width="80%" height="80%"/>
+                            </a>
+                            <h6>鼓浪听涛</h6>
+                        </div>
+                    </div>
+                    <div class="col-xl-10 col-lg-10 col-md-6 col-6 d-flex align-items-center justify-content-end">
+                        <div class="menu d-inline-block">
+                            <nav id="main-menu" class="main-menu">
+                                <ul>
+                                    <li><a href="../index">主页</a></li>
+                                    <li class="dropdown">
+                                        <a href="../tour">旅游资讯</a>
+                                        <ul class="submenu">
+                                            <li><a href="../spot">景点</a></li>
+                                            <li><a href="../food">美食</a></li>
+                                            <li><a href="../transportation">交通</a></li>
+                                        </ul>
+                                    </li>
+                                    <li><a href="../suggestion">旅游攻略</a></li>
+                                    <li><a href="../plan">定制行程</a></li>
+                                    <li><a href="../about">关于</a></li>
+                                    {% if request.session.is_login %}
+                                    <li class="dropdown">
+                                        <button class="theme-btn">Hello, {{ request.session.user_name }}</button>
+                                        <ul class="submenu">
+                                            <li><a href="../logout">退出登录</a></li>
+                                        </ul>
+                                    </li>
+                                    {% else %}
+                                    <li><a href="../login"><button class="theme-btn">登录</button></a></li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Header Nav Menu End -->
+    </header>
+    <!-- Header End !-->
+
+    <!-- Page Header Start !-->
+    <div class="page-breadcrumb-area page-bg" style="background-image: url('/assets/images/xiamen.jpg')">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="breadcrumb-wrapper">
+                        <div class="page-heading">
+                            <h3 class="page-title">攻略</h3>
+                        </div>
+                        <div class="container" style="text-align: center; margin-top: 250px;">
+                            <a href="../plan"><button class="theme-btn">定制我的行程</button></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Page Header End !-->
+
+    {% if code == 200061 %}
+    <!-- Plan Show Start !-->
+    <div class="blog-area tour-details">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 blog-details-wrapper">
+                    <!-- Post Details Start -->
+                    <article class="single-post-item">
+                        <div class="post-title-wrapper">
+                            <h3 class="post-title">
+                                <a href="blog-details.html">{{ data.name }}</a>
+                            </h3>
+                            <div class="rating">
+                                <div class="ratting-inner">
+                                    <span>
+                                        <i class="fa-solid fa-star"></i>
+                                    </span>
+                                    <span class="counter">5.0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="post-meta style-2">
+                                <div class="post-meta-inner">
+                                    <div class="date-info">
+                                       <i class="fa-solid fa-location-dot"></i>
+                                        <p class="date">厦门</p>
+                                    </div>
+                                    <div class="time-info">
+                                        <i class="fa-solid fa-clock"></i>
+                                        <p class="time">{{ data.days }}天</p>
+                                    </div>
+                                </div>
+                                <h5 class="price">{{ data.budget }}元</h5>
+                         </div>
+                        <div class="post-thumbnail">
+                            <a href="#">
+                                <img src="/assets/images/suggestion{{data.id}}.jpg" alt="Blog Image" />
+                            </a>
+                        </div>
+                        <div class="post-content-wrapper">
+                            <div class="post-content">
+                                <div class="post-card-divider"></div>
+                                 <div class="list-item-wrapper">
+                                    <div class="single-item-list">
+                                        <h6>旅程包含</h6>
+                                        <ul>
+                                            <li>{{ data.days}}天景点之旅</li>
+                                            <li>厦门特色美食</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="post-content-wrapper">
+                            <div class="post-content">
+                                <h4>旅行计划</h4>
+                                <div class="post-card-faq">
+                                    <!-- Accordion Start -->
+                                    <div class="accordion-wrapper style-two">
+                                        <div class="accordion-box-wrapper" id="appointmentAreaStyle1FAQ">
+                                            {% for p in data.plan %}
+                                            <!-- Single Accordion Start -->
+                                            <div class="accordion-list-item">
+                                                <div id="heading{{p.0}}">
+                                                    <div class="accordion-head"  role="button" data-bs-toggle="collapse" data-bs-target="#collapse{{p.0}}" aria-expanded="true" aria-controls="collapse{{p.0}}">
+                                                        <h3 class="accordion-title">
+                                                            DAY {{ p.0 }}&emsp;&emsp; {{ p.1 }}
+                                                        </h3>
+                                                    </div>
+                                                </div>
+                                                <div id="collapse{{p.0}}" role="button" class="accordion-collapse collapse show" aria-labelledby="heading{{p.0}}" data-bs-parent="#appointmentAreaStyle1FAQ">
+                                                    <div class="accordion-item-body">
+                                                        <div class="destination-details sidebar widget widget_latest_post">
+                                                        <ul>
+                                                        {% for each in p.2 %}
+                                                            {% if each.0 == 1 %}
+                                                            <li>
+                                                                <div class="latest-post-thumb">
+                                                                    <img src="/assets/images/{{each.5}}" alt="Latest Post"/>
+                                                                </div>
+                                                                <div class="latest-post-desc">
+                                                                    <h3 class="latest-post-title">{{ each.1 }}</h3>
+                                                                    <span class="latest-post-meta">建议游玩时间：{{ each.2 }}</span>
+                                                                    {% if each.3 != 0 %}
+                                                                    <span class="price">门票：{{ each.3 }}元</span>
+                                                                    {% else %}
+                                                                    <span class="price">门票：免费</span>
+                                                                    {% endif %}
+                                                                    {% if each.4 != None %}
+                                                                    <span class="latest-post-meta">{{ each.4 }}</span>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </li>
+                                                            {% else %}
+                                                            <li>
+                                                                <div class="latest-post-thumb">
+                                                                    <img src="/assets/images/food.png" alt="Latest Post"/>
+                                                                </div>
+                                                                <div class="latest-post-desc">
+                                                                    <h3 class="latest-post-title">{{ each.1 }}</h3>
+                                                                    <span class="latest-post-meta">评分：{{ each.2 }}</span>
+                                                                    <span class="latest-post-meta">种类：{{ each.3 }}</span>
+                                                                    <span class="price">人均：{{ each.4 }}元</span>
+                                                                </div>
+                                                            </li>
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                        </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Single Accordion End -->
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <!-- Accordion End -->
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Plan Show End !-->
+    {% else %}
+    <!-- Location Area Start -->
+    <div class="tour-area">
+        <div class="location-area style-1">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="section-title  align-content-center justify-content-center text-center">
+                            <div class="sec-content">
+                                <h2 class="title">热门攻略</h2>
+                                <img class="bottom-shape" src="/assets/images/bottom-bar.png" alt="Bottom Shape">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="isotope-grid">
+                    <div id="card-area" class="row gy-4">
+                        {% for s in data.suggestion %}
+                        <!--- Single Location Start !-->
+                        <div class="col-lg-4 col-md-6 masonry-portfolio-item wow fadeInUp" data-wow-delay="0s">
+                            <div class="location-card style-2">
+                                <div class="image-wrapper">
+                                    <a href="../suggestion?id={{s.id}}" class="image-inner">
+                                        <img src="/assets/images/suggestion{{s.id}}.jpg" alt="Location Image" style="height: 250px;">
+                                    </a>
+                                    <div class="rating">
+                                        <div class="ratting-inner">
+                                            <span><i class="fa-solid fa-star"></i></span>
+                                            <span class="counter">5.0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="content-wrapper">
+                                    <div class="content-inner">
+                                        <h3 class="content-title"><a>{{s.name}}</a></h3>
+                                        <div class="time-zone">
+                                            <div class="time-zone-inner" style="margin-bottom: -20px;">
+                                                <h5 class="price">人均：{{s.price}}元</h5>
+                                            </div>
+                                            <div class="time-zone-inner">
+                                                <i class="fa-solid fa-location-dot"></i>
+                                                <p class="title">{{ s.spot }}等</p>
+                                            </div>
+                                            <div class="time-zone-inner">
+                                                <i class="fa-solid fa-clock"></i>
+                                                <p class="title">{{ s.day }}天</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!--- Single Location End !-->
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="container" style="text-align: center; margin-top: 250px;">
+                    <a href="../plan"><button class="theme-btn">定制我的行程</button></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Location Area End -->
+    {% endif %}
+
+    <!--- Start Footer !-->
+    <footer class="footer bg-light-black">
+        <div class="footer-sec">
+            <div class="container">
+                <div class="row">
+                    <div class="col-xxl-3 col-xl-3 col-lg-3 col-md-6">
+                        <div class="footer-widget">
+                            <div class="footer-widget-logo">
+                                <div class="footer-logo">
+                                    <a href="index.html"><img src="/assets/images/logo.svg" alt="Footer Logo"/></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-6 ">
+                        <div class="footer-widget footer-widget-info">
+                            <h2 class="footer-widget-title">关于·鼓浪听涛</h2>
+                            <div class="footer-widget-contact">
+                                <p class="desc">我们利用规划算法和推荐算法为您提供符合需求和偏好的行程规划</p>
+                                <div class="footer-contact">
+                                    <div class="contact-icon"><i class="fa-solid fa-location-dot"></i></div>
+                                    <div class="contact-text"><span>NKU, China</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xxl-5 col-xl-5 col-lg-5 col-md-6">
+                        <div class="footer-widget-menu-wrapper">
+                            <div class="footer-widget widget_nav_menu">
+                                <h2 class="footer-widget-title">快速访问</h2>
+                                <ul class="menu">
+                                    <li><a href="../index">主页</a></li>
+                                    <li><a href="../tour">旅游资讯</a></li>
+                                    <li><a href="../suggestion">旅游攻略</a></li>
+                                    <li><a href="../plan">定制行程</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <div class="row">
+                    <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-6 ">
+                        <div class="footer-widget">
+                            <h2 class="footer-widget-title">联系我们</h2>
+                             <div class="footer-widget-contact">
+                                 <div class="footer-contact">
+                                    <div class="contact-icon"><i class="fa-solid fa-envelope"></i></div>
+                                    <div class="contact-text">roslin_v@163.com</div>
+                                </div>
+                             </div>
+                        </div>
+                    </div>
+                    <div class="col-xxl-5 col-xl-5 col-lg-5 col-md-6  d-flex  justify-content-lg-end align-items-lg-end">
+                        <div class="footer-widget">
+                            <h2 class="footer-widget-title">关注我们</h2>
+                            <div class="footer-widget-social">
+                                <div class="social-profile">
+                                    <a href="https://github.com/Roslin-v"><img src="/assets/images/github.svg"></a>
+                                    <a href="https://blog.csdn.net/Roslin_v"><img src="/assets/images/csdn.svg"></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom-area">
+            <div class="container">
+                <div class="footer-bottom-wrapper">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="copyright-text">
+                                <p>Copyright &copy; Roslin V.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!--- End Footer !-->
+
+    <!-- Scroll Up Section Start -->
+    <div id="scrollTop" class="scrollup-wrapper">
+        <div class="scrollup-btn">
+            <i class="fa-solid fa-arrow-up"></i>
+        </div>
+    </div>
+    <!-- Scroll Up Section End -->
+</body>
+</html>
