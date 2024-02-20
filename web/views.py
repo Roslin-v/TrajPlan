@@ -352,3 +352,7 @@ def show_suggestion(request):
 
         return render(request, 'suggestion.html', Response(200061, {'id': int(s_id), 'name': name, 'days': days,
                                                                     'budget': budget, 'plan': plan}).res2dict())
+
+
+def about(request):
+    return render(request, 'about.html', Response(200001).res2dict())
