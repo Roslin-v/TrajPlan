@@ -246,6 +246,7 @@ class PlanManager:
         path_best = np.zeros((max_iter, node_count))    # 每次迭代后的最优路径
         cost_best = np.zeros(max_iter)              # 存放每次迭代的最优距离
         etable = 1.0 / cost         # 倒数矩阵
+        same_count = 0
         # ======== 开始迭代
         while iter < max_iter:
             # Step1: 蚂蚁初始点选择（虚拟点）
@@ -287,6 +288,13 @@ class PlanManager:
                 else:  # 当前解比之前的要好，替换当前解和路径
                     cost_best[iter] = length.min()
                     path_best[iter] = candidate[length.argmin()].copy()
+                if (path_best[iter] == path_best[iter-1]).all():
+                    same_count += 1
+                else:
+                    same_count = 0
+            if same_count == 20:
+                path_best[-1] = path_best[iter].copy()
+                break
             # Step 4: 更新信息素
             pheromone_change = np.zeros((node_count, node_count))
             for i in range(ant_count):
@@ -352,6 +360,7 @@ class PlanManager:
                 cur_time += trans_time[route[i]][route[i+1]]
             i += 1
         self.plan = plan
+
         for key in plan:
             p = plan[key]
             self.plan_situ[key] = [0, []]  # {day1: 是否需要补充行程, [已有poi]}
@@ -364,6 +373,7 @@ class PlanManager:
             plan_time += list(plan.items())[-1][1][-1][-2]
         else:
             plan_time += list(plan.items())[-1][1][-2][-2]
+
         # Todo: 如果超时（救命这个写得好奇怪啊呜呜呜）
         if plan_time > self.constraint['user-time']:
             # 先看能不能拼接已有的行程
@@ -377,16 +387,40 @@ class PlanManager:
                         key1 = key
                     else:
                         key2 = key
+                        # 如果时间能够拼在一天
                         if self.plan[key1][-1][-2] + self.plan[key2][-1][-2] - self.plan[key2][0][2] < 21:
+                            # 检查拼在后的能否在晚上访问
+                            can_add = True
                             for each in self.plan[key2]:
-                                each[2] += (self.plan[key1][-1][-2] - self.plan[key1][0][2] + 1)
-                                each[3] += (self.plan[key1][-1][-2] - self.plan[key1][0][2] + 1)
-                            self.plan[key1] += self.plan[key2]
-                            self.plan_situ[key1][0] = 0
-                            del self.plan[key2]
-                            del self.plan_situ[key2]
-            # 重新计算时间
+                                if (each[3] + self.plan[key1][-1][-2] - self.plan[key1][0][2] + 1) > 17 and \
+                                        self.spot_feat[each[0] - 10001][10] != 1:
+                                    can_add = False
+                                    break
+                            if not can_add:
+                                key1, key2 = key2, key1
+                                can_add = True
+                                for each in self.plan[key2]:
+                                    if (each[3] + self.plan[key1][-1][-2] - self.plan[key1][0][2] + 1) > 17 and \
+                                            self.spot_feat[each[0] - 10001][10] != 1:
+                                        can_add = False
+                                        break
+                            if can_add:
+                                for each in self.plan[key2]:
+                                    each[2] += (self.plan[key1][-1][-2] - self.plan[key1][0][2] + 1)
+                                    each[3] += (self.plan[key1][-1][-2] - self.plan[key1][0][2] + 1)
+                                self.plan[key1] += self.plan[key2]
+                                self.plan_situ[key1][0] = 0
+                                del self.plan[key2]
+                                del self.plan_situ[key2]
+            # 重新计算时间和天数（避免1、2天合并了，只剩1、3的情况）
             plan_time = (len(self.plan) - 1) * 24 + list(self.plan.items())[-1][1][-1][-2]
+            new_plan = {}
+            cur_day = 1
+            for key in self.plan:
+                new_plan[cur_day] = self.plan[key]
+                cur_day += 1
+            self.plan = new_plan
+
         self.constraint['all-time'] = plan_time
         plan_fee = 0
         for key in self.plan:

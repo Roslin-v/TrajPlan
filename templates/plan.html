@@ -139,17 +139,18 @@
                     <span class="short-title">Design my tour</span>
                     <h2 class="title">定制我的行程</h2>
                     <img class="bottom-shape" src="/assets/images/bottom-bar.png" alt="Bottom Shape">
+                    {% if code == 200031 %}
+                    <div class="col-12" style="margin-top: 75px;">
+                        <a href="../plan"><button class="theme-btn" type="button">重新定制行程</button></a>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
+            {% if code != 200031 %}
             <div class="comment-respond" style="text-align: left;">
                 <form action="#" method="post" class="comment-form">
                     {% csrf_token %}
                     <div class="row g-5">
-                        {% if code == 200031 %}
-                        <div class="col-12">
-                            <a href="../plan"><button class="theme-btn" type="button">重新定制行程</button></a>
-                        </div>
-                        {% else %}
                         <div class="col-xl-6">
                             <label>预计游玩时间（天）：</label>
                             <input id="user_time" name="user_time" type="number" required="required">
@@ -184,10 +185,10 @@
                         <div class="col-12">
                             <button class="theme-btn" type="submit">定制我的行程</button>
                         </div>
-                        {% endif %}
                     </div>
                 </form>
             </div>
+            {% endif %}
         </div>
     </div>
     <!-- User Constraint End !-->
