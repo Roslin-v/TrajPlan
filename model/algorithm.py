@@ -536,7 +536,7 @@ class PlanManager:
         score = []
         comment_min = min(comment)
         k1 = 30 / (max(comment) - comment_min)
-        for i in range(20):
+        for i in range(len(food_cand)):
             score.append((20 - 0.5 * i) + food_cand[i][2] * 10 + k1 * (food_cand[i][3] - comment_min))
         sorted_id = sorted(range(len(score)), key=lambda k: score[k], reverse=True)
         food_choose = food_cand[sorted_id[0]]
@@ -564,6 +564,8 @@ class PlanManager:
             # 在这之外的情况 中间是否能插入
             else:
                 point1 = np.array([self.spot_feat[p[lunch_index][0] - 10001][6], self.spot_feat[p[lunch_index][0] - 10001][7]])
+            if lunch_index == 0:
+                lunch_index = 1
             if self.spot_feat[p[lunch_index - 1][0] - 10001][0] == 10001 or self.spot_feat[p[lunch_index - 1][0] - 10001][10] == 10001 or self.spot_feat[p[lunch_index][0] - 10001][0] == 10001 or self.spot_feat[p[lunch_index][0] - 10001][10] == 10001:
                 food_choose = self.recommend_food(point1, point2, (1 - (len(self.plan) - key) / len(self.plan)), True)
             else:
