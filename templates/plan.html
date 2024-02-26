@@ -49,6 +49,8 @@
             setTimeout(() => {
               location.href = "../login";
             }, 3000)
+            {% elif code == 200031 %}
+            swal('行程定制成功', '共耗时{{data.time}}秒', 'success');
             {% elif code == 200030 %}
             swal('行程定制失败', '请检查您输入的条件', 'error');
             {% endif %}
@@ -163,7 +165,7 @@
                             <label>景点：</label>
                             <select id="select_spot" name="select_spot" multiple="multiple" required="required">
                                 {% for s in data.spots %}
-                                <option>{{ s }}</option>
+                                <option id="{{s.id}}" value="{{s.id}}">{{ s.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -171,15 +173,19 @@
                             <label>美食：</label>
                             <select id="food_type" name="food_type" multiple="multiple" required="required">
                                 {% for f in data.foods %}
-                                <option>{{ f }}</option>
+                                <optgroup label="{{f.0}}">
+                                    {% for each in f.1 %}
+                                    <option id="{{each.category_id}}" value="{{each.category_id}}">{{each.category}}</option>
+                                    {% endfor %}
+                                </optgroup>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="col-xl-6">
                             <label>交通：</label>
                             <select id="prefer_trans" name="prefer_trans">
-                                <option>公共交通</option>
-                                <option>打的</option>
+                                <option id="trans0" value="0">公共交通</option>
+                                <option id="trans1" value="1">打的</option>
                             </select>
                         </div>
                         <div class="col-12">
@@ -497,6 +503,13 @@
         $('#prefer_trans').multipleSelect({
             placeholder: "请选择您偏好的交通方式",
         });
+        {% if code == 200030 %}
+        document.getElementById("user_time").value = "{{data.user_time}}";
+        document.getElementById("user_budget").value = "{{data.user_budget}}";
+        $("#prefer_trans").val({{data.prefer_trans}});
+        $("#select_spot").val({{data.select_spot}});
+        $("#food_type").val({{data.food_type}});
+        {% endif %}
     </script>
 </body>
 </html>

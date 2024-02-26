@@ -204,7 +204,7 @@ class PlanManager:
         if T >= 24:  # 如果用户选择超过一天，一天之中最多12h可以实际游玩
             T /= 2
             T = int(T)
-        if sum(budgets) > B / 2 or sum(times) > T:
+        if sum(budgets) > B or sum(times) > T:
             new_pois_index = self.knapsack(budgets, times, B, T)
             new_pois = []
             for each in new_pois_index:
@@ -776,7 +776,7 @@ class PlanManager:
                                 bus_type = busline['type']
                                 temp_dis = int(busline['distance'])
                                 speed = 1
-                                if bus_type == '普通公交线路':
+                                if bus_type == '普通公交线路' or bus_type == '旅游专线':
                                     speed = 30 * 16.7
                                 elif bus_type == 'BRT':
                                     speed = 40 * 16.7

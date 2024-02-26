@@ -85,32 +85,62 @@ def diyplan(request):
     if not request.session.get('is_login', None):
         return render(request, 'plan.html', Response(200000).res2dict())
 
-    spots = Spot.objects.values_list('name', flat=True)
-    foods = set(Food.objects.filter().values_list('category', flat=True))
-    foods = sorted(foods, key=str.lower)
+    spots = Spot.objects.values('id', 'name')
+    category = Food.objects.values('category_id', 'category').distinct().order_by('category_id')
+    cat_double = []
+    cat_temp = []
+    cat_double.append(['厦门特色', [category[0]]])
+    for i in range(1, 3):
+        cat_temp.append(category[i])
+    cat_double.append(['海鲜', cat_temp])
+    cat_temp = []
+    for i in range(3, 19):
+        cat_temp.append(category[i])
+    cat_double.append(['地方菜系', cat_temp])
+    cat_temp = []
+    for i in range(19, 34):
+        cat_temp.append(category[i])
+    cat_double.append(['异域料理', cat_temp])
+    cat_temp = []
+    for i in range(34, 39):
+        cat_temp.append(category[i])
+    cat_double.append(['火锅', cat_temp])
+    cat_temp = []
+    for i in range(39, 42):
+        cat_temp.append(category[i])
+    cat_double.append(['烧烤', cat_temp])
+    cat_temp = []
+    for i in range(42, 49):
+        cat_temp.append(category[i])
+    cat_double.append(['其他', cat_temp])
+    cat_temp = []
+    for i in range(49, 59):
+        cat_temp.append(category[i])
+    cat_double.append(['小吃快餐', cat_temp])
 
     if request.method == 'GET':
-        return render(request, 'plan.html', Response(200001, {'spots': spots, 'foods': foods}).res2dict())
+        return render(request, 'plan.html', Response(200001, {'spots': spots, 'foods': cat_double}).res2dict())
 
     # 定制行程
     user_time = int(request.POST.get('user_time'))
     user_budget = int(request.POST.get('user_budget'))
-    p_trans = request.POST.get('prefer_trans')
+    prefer_trans = int(request.POST.get('prefer_trans'))
     s_spot = request.POST.getlist('select_spot')
-    food_type = request.POST.getlist('food_type')
-    if user_time < 1 or user_time > 7 or user_budget < 100:
-        return render(request, 'plan.html', Response(200030, {'spots': spots, 'foods': foods}).res2dict())
-
-    if p_trans == '公共交通':
-        prefer_trans = 0
-    else:
-        prefer_trans = 1
+    f_type = request.POST.getlist('food_type')
     select_spot = []
     for each in s_spot:
-        select_spot.append(Spot.objects.get(name=str(each)).id)
+        select_spot.append(int(each))
+    food_type = []
+    for each in f_type:
+        food_type.append(int(each))
+    if user_time < 1 or user_time > 7 or user_budget < 100:
+        return render(request, 'plan.html', Response(200030, {'spots': spots, 'foods': cat_double,
+                                                              'user_time': user_time, 'user_budget': user_budget,
+                                                              'prefer_trans': prefer_trans, 'select_spot': select_spot,
+                                                              'food_type': food_type}).res2dict())
+
     lunch_no = set(Food.objects.values_list('category_id', flat=True))
-    for each in food_type:
-        c_id = Food.objects.filter(category=str(each)).first().category_id
+    for c_id in food_type:
         if c_id in lunch_no:
             lunch_no.remove(c_id)
     # 考虑类别，排除203冰激淋 219酒吧 220居酒屋 221咖啡店 228零食 232 233面包 250卤味 256西式快餐 257甜点 260小吃 265饮品
@@ -129,6 +159,7 @@ def diyplan(request):
                   'dinner-no': list(lunch_no)}
 
     # 规划并丰富行程
+    start_time = time.time()
     plan_manager.reinitial(constraint)
     try:
         plan_manager.check_constraint()
@@ -143,13 +174,17 @@ def diyplan(request):
         plan_manager.get_trans_print()
         plan_manager.evaluate()
     except:
-        return render(request, 'plan.html', Response(200030, {'spots': spots, 'foods': foods}).res2dict())
+        return render(request, 'plan.html', Response(200030, {'spots': spots, 'foods': cat_double,
+                                                              'user_time': user_time, 'user_budget': user_budget,
+                                                              'prefer_trans': prefer_trans, 'select_spot': s_spot,
+                                                              'food_type': food_type}).res2dict())
 
     return render(request, 'plan.html', Response(200031, {'plan': plan_manager.plan_print,
                                                           'trans': plan_manager.trans_print,
                                                           'score': round(plan_manager.score/20, 1),
                                                           'days': len(plan_manager.plan),
-                                                          'budget': int(plan_manager.constraint['all-budget'])}).res2dict())
+                                                          'budget': int(plan_manager.constraint['all-budget']),
+                                                          'time': round(time.time() - start_time, 2)}).res2dict())
 
 
 def show_spot(request):
