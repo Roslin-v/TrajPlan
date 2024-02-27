@@ -55,6 +55,52 @@
             swal('行程定制失败', '请检查您输入的条件', 'error');
             {% endif %}
         });
+        function editSpot() {
+            var editBtn = document.getElementById("editBtn");
+            if (editBtn.innerText === "编辑行程") {
+                editBtn.innerText = "保存编辑";
+                {% for p in data.plan %}
+                    {% for each in p.2 %}
+                    {% if each.0 == 1 %}
+                    document.getElementById("edit{{each.6}}").style.display="inline-block";
+                    {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            }
+            else {
+                editBtn.innerText = "编辑行程";
+                {% for p in data.plan %}
+                    {% for each in p.2 %}
+                    {% if each.0 == 1 %}
+                    document.getElementById("edit{{each.6}}").style.display="none";
+                    {% endif %}
+                    {% endfor %}
+                {% endfor %}
+
+            }
+        }
+        function changeSpot(oldId) {
+            var select = document.getElementById("changeSelect" + oldId);
+            $.ajax({
+                url:"/plan/",
+                method:"post",
+                data: {
+                    csrfmiddlewaretoken: '{{ csrf_token }}',
+                    old: oldId,
+                    new: select.options[select.selectedIndex].value
+                },
+                success:function (data) {
+                    if (data.code === 200070) {
+                        swal('替换景点失败', data.data, 'error');
+                    }
+                    else {
+                        console.log('success');
+                        document.getElementById("spot" + oldId).innerHTML = data.data;
+
+                    }
+                }
+            })
+        }
     </script>
 </head>
 <body>
@@ -262,7 +308,8 @@
                         </div>
                         <div class="post-content-wrapper">
                             <div class="post-content">
-                                <h4>旅行计划</h4>
+                                <h4 style="display:inline-block; margin-right:100px;">旅行计划</h4>
+                                <button id="editBtn" name="editBtn" class="theme-btn" onclick="editSpot();">编辑行程</button>
                                 <div class="post-card-faq">
                                     <!-- Accordion Start -->
                                     <div class="accordion-wrapper style-two">
@@ -283,7 +330,7 @@
                                                             <ul>
                                                             {% for each in p.2 %}
                                                                 {% if each.0 == 1 %}
-                                                                <li>
+                                                                <li id="spot{{each.6}}">
                                                                     <div class="latest-post-thumb">
                                                                         <img src="/assets/images/{{each.5}}" alt="Latest Post"/>
                                                                     </div>
@@ -298,6 +345,15 @@
                                                                         {% if each.4 != None %}
                                                                         <span class="latest-post-meta">{{ each.4 }}</span>
                                                                         {% endif %}
+                                                                        <div id="edit{{each.6}}" style="display: none; margin-top: 25px;">
+                                                                            <select id="changeSelect{{each.6}}" style="width: 200px;">
+                                                                                {% for s in data.spots %}
+                                                                                <option id="{{each.6}}{{s.id}}" value="{{s.id}}">{{ s.name }}</option>
+                                                                                {% endfor %}
+                                                                            </select>
+                                                                            <button id="changeBtn{{each.6}}" class="theme-btn" type="button" onclick="changeSpot({{each.6}});" style="height: 50px; margin-left: 20px;">替换</button>
+                                                                            <button id="deleteBtn{{each.6}}" class="theme-btn" style="height: 50px; margin-left: 20px;">删除</button>
+                                                                        </div>
                                                                     </div>
                                                                 </li>
                                                                 {% else %}
@@ -503,6 +559,18 @@
         $('#prefer_trans').multipleSelect({
             placeholder: "请选择您偏好的交通方式",
         });
+        {% for p in data.plan %}
+            {% for each in p.2 %}
+            {% if each.0 == 1 %}
+            $('#changeSelect{{each.6}}').multipleSelect({
+                minimumCountSelected: 3,
+                filter: true,
+                selectAll: false,
+            });
+            $('#changeSelect{{each.6}}').multipleSelect('setSelects', [{{each.6}}]);
+            {% endif %}
+            {% endfor %}
+        {% endfor %}
     </script>
 </body>
 </html>

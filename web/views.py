@@ -1,5 +1,6 @@
 import time
 
+from django.http import JsonResponse
 from django.shortcuts import render, HttpResponse, redirect
 from model.train import predict
 from model.algorithm import PlanManager
@@ -86,6 +87,41 @@ def diyplan(request):
         return render(request, 'plan.html', Response(200000).res2dict())
 
     spots = Spot.objects.values('id', 'name')
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        new_id = int(request.POST.get('new'))
+        old_id = int(request.POST.get('old'))
+        if new_id in plan_manager.constraint['select-spot']:
+            return JsonResponse(Response(200070, '该景点已存在！').res2dict())
+
+        new_info = Spot.objects.filter(id=new_id).values('id', 'name', 'price', 'description', 'pic')[0]
+        plan_manager.constraint['select-spot'].insert(plan_manager.constraint['select-spot'].index(old_id), new_id)
+        plan_manager.constraint['select-spot'].remove(old_id)
+
+        str_html = "<div class='latest-post-thumb'><img src='/assets/images/" + new_info['pic'] + "' alt='Latest Post'/></div>" \
+                   "<div class='latest-post-desc'><h3 class='latest-post-title'>" + new_info['name'] + "</h3>"
+        if new_info['price']:
+            str_html += ("<span class='price'>门票：" + str(new_info['price']) + "元</span>")
+        else:
+            str_html += "<span class='price'>门票：免费</span>"
+        if new_info['description']:
+            str_html += "<span class ='latest-post-meta'>" + new_info['description'] + "</span >"
+        str_html += ("<div id='edit" + str(new_info['id']) + "' style='margin-top: 25px;'>"
+                    "<select id='changeSelect" + str(new_info['id']) + "' style='width: 200px;'>")
+        for s in spots:
+            if new_info['id'] == s['id']:
+                str_html += ("<option id='" + str(new_info['id']) + str(s['id']) + "' value='" + str(s['id']) + "' "
+                            "selected>" + s['name'] + "</option>")
+            else:
+                str_html += ("<option id='" + str(new_info['id']) + str(s['id']) + "' value='" + str(s['id']) + "'>" +
+                            s['name'] + "</option>")
+        str_html += ("</select><button id='changeBtn" + str(new_info['id']) + "' class='theme-btn' type='button' "
+                      "onclick='changeSpot(" + str(new_info['id']) + ");' style='height: 50px; margin-left: 20px;'>"
+                     "替换</button><button id='deleteBtn" + str(new_info['id']) + "' class='theme-btn' "
+                    "style='height: 50px; margin-left: 20px;'>删除</button></div></div>")
+
+        return JsonResponse(Response(200071, str_html).res2dict())
+
     category = Food.objects.values('category_id', 'category').distinct().order_by('category_id')
     cat_double = []
     cat_temp = []
@@ -166,9 +202,9 @@ def diyplan(request):
             plan_manager.plan, plan_manager.constraint = predict(args, 1, plan_manager.plan,
                                                                  plan_manager.constraint, plan_manager.expand_day)
         plan_manager.improve_plan()
-        plan_manager.get_trans()
+        # plan_manager.get_trans()
         plan_manager.get_plan_print()
-        plan_manager.get_trans_print()
+        # plan_manager.get_trans_print()
         plan_manager.evaluate()
     except:
         return render(request, 'plan.html', Response(200030, {'spots': spots, 'foods': cat_double,
@@ -181,7 +217,8 @@ def diyplan(request):
                                                           'score': round(plan_manager.score/20, 1),
                                                           'days': len(plan_manager.plan),
                                                           'budget': int(plan_manager.constraint['all-budget']),
-                                                          'time': round(time.time() - start_time, 2)}).res2dict())
+                                                          'time': round(time.time() - start_time, 2),
+                                                          'spots': spots}).res2dict())
 
 
 def show_spot(request):
