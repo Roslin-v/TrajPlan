@@ -114,7 +114,7 @@ def diyplan(request):
         cat_temp.append(category[i])
     cat_double.append(['其他', cat_temp])
     cat_temp = []
-    for i in range(49, 59):
+    for i in range(49, 55):
         cat_temp.append(category[i])
     cat_double.append(['小吃快餐', cat_temp])
 
@@ -143,10 +143,7 @@ def diyplan(request):
     for c_id in food_type:
         if c_id in lunch_no:
             lunch_no.remove(c_id)
-    # 考虑类别，排除203冰激淋 219酒吧 220居酒屋 221咖啡店 228零食 232 233面包 250卤味 256西式快餐 257甜点 260小吃 265饮品
-    l = [250, 254, 255, 257, 259, 260, 261, 262, 263, 264, 265, 243]
-    for each in l:
-        lunch_no.add(each)
+    lunch_no.add(243)   # 酒吧
     args = get_args()
     constraint = {'user-time': user_time * 24,
                   'user-budget': user_budget,
@@ -168,7 +165,9 @@ def diyplan(request):
             'all-budget'] < plan_manager.constraint['user-budget'] / 2:
             plan_manager.plan, plan_manager.constraint = predict(args, 1, plan_manager.plan,
                                                                  plan_manager.constraint, plan_manager.expand_day)
+        print(1)
         plan_manager.improve_plan()
+        print(2)
         plan_manager.get_trans()
         plan_manager.get_plan_print()
         plan_manager.get_trans_print()
@@ -236,17 +235,9 @@ def show_food(request):
         cat_temp.append(category[i])
     cat_double.append(['其他', cat_temp])
     cat_temp = []
-    for i in range(49, 59):
+    for i in range(49, 55):
         cat_temp.append(category[i])
     cat_double.append(['小吃快餐', cat_temp])
-    cat_temp = []
-    for i in range(59, 61):
-        cat_temp.append(category[i])
-    cat_double.append(['饮品', cat_temp])
-    cat_temp = []
-    for i in range(61, 66):
-        cat_temp.append(category[i])
-    cat_double.append(['面包甜品', cat_temp])
 
     if request.method == 'POST':
         keyword = request.POST.get('keyword')

@@ -185,7 +185,7 @@
                             <label>交通：</label>
                             <select id="prefer_trans" name="prefer_trans">
                                 <option id="trans0" value="0">公共交通</option>
-                                <option id="trans1" value="1">打的</option>
+                                <option id="trans1" value="1">打车</option>
                             </select>
                         </div>
                         <div class="col-12">
@@ -367,7 +367,7 @@
                                                                             <span class="latest-post-meta">途径{{ way.5 }}</span>
                                                                             {% endif %}
                                                                             {% else %}
-                                                                            <span class="latest-post-meta" style="display:inline-block;">打的{{ way.1 }}  预计用时{{ way.2 }}分钟  预计花费{{ way.3 }}元</span>
+                                                                            <span class="latest-post-meta" style="display:inline-block;">打车{{ way.1 }}  预计用时{{ way.2 }}分钟  预计花费{{ way.3 }}元</span>
                                                                             {% endif %}
                                                                         </div>
                                                                         {% endfor %}
@@ -503,13 +503,6 @@
         $('#prefer_trans').multipleSelect({
             placeholder: "请选择您偏好的交通方式",
         });
-        {% if code == 200030 %}
-        document.getElementById("user_time").value = "{{data.user_time}}";
-        document.getElementById("user_budget").value = "{{data.user_budget}}";
-        $("#prefer_trans").val({{data.prefer_trans}});
-        $("#select_spot").val({{data.select_spot}});
-        $("#food_type").val({{data.food_type}});
-        {% endif %}
     </script>
 </body>
 </html>

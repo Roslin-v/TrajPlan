@@ -621,7 +621,7 @@ def predict(args, cur_user, plan, constraint, expand_day):
                                 raw_X[j][10] not in constraint['select-spot'] or plan[key][-1][0] == raw_X[j][10] or
                                 raw_X[plan[key][-1][0] - 10001][10] == raw_X[j][10]) and (
                                 (plan[key][-1][-2] + 1) < 16 or ((plan[key][-1][-2] + 1) >= 16 and raw_X[j][9] == 1)) and (
-                                raw_X[j][5] + constraint['all-budget']) <= constraint['user-budget']:
+                                raw_X[j][5] + constraint['all-budget']) <= constraint['user-budget'] / 2:
                             plan_poi[key][1].append(j + 10001)
                             if raw_X[plan[key][-1][0]-10001][10] in constraint['select-spot'] and raw_X[j][10] != raw_X[plan[key][-1][0]-10001][10] and (j+10001) != raw_X[plan[key][-1][0]-10001][10]:
                                 temp_index = 0

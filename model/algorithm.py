@@ -532,6 +532,29 @@ class PlanManager:
                 cand_count += 1
                 if cand_count == 20:
                     break
+        # 如果距离太远了，备选餐厅还不够的话，推荐其他类型
+        if cand_count != 20:
+            print('append more different food')
+            print(self.constraint['user-budget'], self.constraint['all-budget'], decadence)
+            for each in sorted_id:
+                satisfy = True
+                # 鼓浪屿上只能吃鼓浪屿地区的餐厅
+                if position and self.food_feat[each][10] != 10001:
+                    satisfy = False
+                # 餐厅不能重复
+                for c in self.constraint['select-food']:
+                    if self.food_feat[each][0] == c:
+                        satisfy = False
+                        break
+                # 满足预算（必须剩一点预算，保证之后几天有饭吃）
+                if self.food_feat[each][6] > (self.constraint['user-budget'] - self.constraint['all-budget']) * decadence:
+                    satisfy = False
+                if satisfy:
+                    food_cand.append(self.food_feat[each])
+                    comment.append(self.food_feat[each][3])
+                    cand_count += 1
+                    if cand_count == 20:
+                        break
         # 综合距离2、评分5、评论人数3确定优先顺序
         score = []
         comment_min = min(comment)
@@ -776,12 +799,12 @@ class PlanManager:
                                 bus_type = busline['type']
                                 temp_dis = int(busline['distance'])
                                 speed = 1
-                                if bus_type == '普通公交线路' or bus_type == '旅游专线':
+                                if bus_type == '普通公交线路' or bus_type == '旅游专线' or bus_type == '微循环公交':
                                     speed = 30 * 16.7
                                 elif bus_type == 'BRT':
                                     speed = 40 * 16.7
-                                elif bus_type == '地铁':
-                                    speed = 50 * 16.7
+                                elif bus_type == '地铁线路':
+                                    speed = 30 * 16.7
                                 if bus_type == '轮渡':
                                     temp_t.append([2, bus_type, busline['departure_stop']['name'], busline['name'],
                                                    busline['arrival_stop']['name'], str_via, 15])
