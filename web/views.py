@@ -165,9 +165,7 @@ def diyplan(request):
             'all-budget'] < plan_manager.constraint['user-budget'] / 2:
             plan_manager.plan, plan_manager.constraint = predict(args, 1, plan_manager.plan,
                                                                  plan_manager.constraint, plan_manager.expand_day)
-        print(1)
         plan_manager.improve_plan()
-        print(2)
         plan_manager.get_trans()
         plan_manager.get_plan_print()
         plan_manager.get_trans_print()

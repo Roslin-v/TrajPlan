@@ -534,8 +534,6 @@ class PlanManager:
                     break
         # 如果距离太远了，备选餐厅还不够的话，推荐其他类型
         if cand_count != 20:
-            print('append more different food')
-            print(self.constraint['user-budget'], self.constraint['all-budget'], decadence)
             for each in sorted_id:
                 satisfy = True
                 # 鼓浪屿上只能吃鼓浪屿地区的餐厅
