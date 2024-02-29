@@ -88,15 +88,25 @@ def diyplan(request):
 
     spots = Spot.objects.values('id', 'name')
 
+    # ========== 编辑行程
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        new_id = int(request.POST.get('new'))
         old_id = int(request.POST.get('old'))
+
+        # 删除行程
+        if int(request.POST.get('signal')) == 2:
+            plan_manager.constraint['select-spot'].remove(old_id)
+            plan_manager.plan_change[old_id] = [2]
+            return JsonResponse(Response(200081).res2dict())
+
+        # 替换行程
+        new_id = int(request.POST.get('new'))
         if new_id in plan_manager.constraint['select-spot']:
             return JsonResponse(Response(200070, '该景点已存在！').res2dict())
 
         new_info = Spot.objects.filter(id=new_id).values('id', 'name', 'price', 'description', 'pic')[0]
-        plan_manager.constraint['select-spot'].insert(plan_manager.constraint['select-spot'].index(old_id), new_id)
+        plan_manager.constraint['select-spot'].append(new_id)
         plan_manager.constraint['select-spot'].remove(old_id)
+        plan_manager.plan_change[old_id] = [1, new_id]
 
         str_html = "<div class='latest-post-thumb'><img src='/assets/images/" + new_info['pic'] + "' alt='Latest Post'/></div>" \
                    "<div class='latest-post-desc'><h3 class='latest-post-title'>" + new_info['name'] + "</h3>"
@@ -120,8 +130,24 @@ def diyplan(request):
                      "替换</button><button id='deleteBtn" + str(new_info['id']) + "' class='theme-btn' "
                     "style='height: 50px; margin-left: 20px;'>删除</button></div></div>")
 
-        return JsonResponse(Response(200071, str_html).res2dict())
+        return JsonResponse(Response(200071, {'str': str_html, 'id': new_info['id']}).res2dict())
 
+    # 保存修改的行程
+    if request.method == 'POST' and int(request.POST.get('signal', 0)):
+        plan_manager.change_plan()
+        plan_manager.improve_plan()
+        plan_manager.get_plan_print()
+        # plan_manager.get_trans()
+        # plan_manager.get_trans_print()
+        plan_manager.evaluate()
+        return render(request, 'plan.html', Response(200091, {'plan': plan_manager.plan_print,
+                                                              'trans': plan_manager.trans_print,
+                                                              'score': round(plan_manager.score / 20, 1),
+                                                              'days': len(plan_manager.plan),
+                                                              'budget': int(plan_manager.constraint['all-budget']),
+                                                              'spots': spots}).res2dict())
+
+    # ========== 返回定制行程的表单
     category = Food.objects.values('category_id', 'category').distinct().order_by('category_id')
     cat_double = []
     cat_temp = []
@@ -157,7 +183,7 @@ def diyplan(request):
     if request.method == 'GET':
         return render(request, 'plan.html', Response(200001, {'spots': spots, 'foods': cat_double}).res2dict())
 
-    # 定制行程
+    # ========== 定制行程
     user_time = int(request.POST.get('user_time'))
     user_budget = int(request.POST.get('user_budget'))
     prefer_trans = int(request.POST.get('prefer_trans'))

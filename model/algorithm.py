@@ -124,6 +124,7 @@ class PlanManager:
         self.plan = {}                  # 计划 {day1: [poi_id, poi_name, ...]}
         self.plan_situ = {}             # 计划情况 {day1: [是否需要补充行程, [已有poi]]}
         self.plan_print = []
+        self.plan_change = {}
         self.trans = {'bus': [], 'taxi': [], 'walk': []}
         self.trans_print = []
         self.score = 0
@@ -137,6 +138,7 @@ class PlanManager:
         self.plan = {}
         self.plan_situ = {}
         self.plan_print = []
+        self.plan_change = {}
         self.trans = {'bus': [], 'taxi': [], 'walk': []}
         self.trans_print = []
         self.score = 0
@@ -484,7 +486,7 @@ class PlanManager:
                     if str(self.spot_feat[each[0]-10001][11]) != 'nan':
                         temp_p.append([1, each[1], time_str, int(each[4]), self.spot_feat[each[0]-10001][11], self.spot_feat[each[0]-10001][12], each[0]])
                     else:
-                        temp_p.append([1, each[1], time_str, int(each[4]), None, self.spot_feat[each[0]-10001][12]])
+                        temp_p.append([1, each[1], time_str, int(each[4]), None, self.spot_feat[each[0]-10001][12], each[0]])
                 else:   # 餐厅
                     temp_p.append([2, each[1], each[2], each[3], each[4]])
             self.plan_print.append([key, names[:-1], temp_p])
@@ -639,6 +641,13 @@ class PlanManager:
             for each in self.plan[key]:
                 plan_fee += each[4]
         self.constraint['all-budget'] = plan_fee
+
+        # ========== 初始化景点行程调整表
+        for key in self.plan:
+            p = self.plan[key]
+            for each in p:
+                if int(each[0] / 10000) == 1:
+                    self.plan_change[each[0]] = [0]
 
     def get_trans(self):
         for key in self.plan:
@@ -840,6 +849,65 @@ class PlanManager:
         self.score *= 100
         # print('Score: %.2f' % self.score, end='')
         # print('/100')
+
+    def change_plan(self):
+        spot_seq = {}
+        belong = {}
+        small_position = []
+        for key in self.plan:
+            spot_seq[key] = []
+            p = self.plan[key]
+            for each in p:
+                if int(each[0] / 10000) == 1:
+                    # 删除行程的直接跳过了
+                    if self.plan_change[each[0]][0] == 2:
+                        continue
+                    cur_id = each[0]
+                    # 替换行程
+                    if self.plan_change[each[0]][0] == 1:
+                        cur_id = self.plan_change[each[0]][1]
+                    spot_seq[key].append(cur_id)
+                    # 记录是否存在所属情况
+                    if self.spot_feat[cur_id-10001][10] in self.constraint['select-spot']:
+                        small_position.append(cur_id)
+                        index = self.spot_feat[cur_id-10001][10]
+                        if index in belong:
+                            belong[index].append(cur_id)
+                        else:
+                            belong[index] = [cur_id]
+        # 重新安排行程
+        new_plan = {}
+        for key in spot_seq:
+            new_plan[key] = []
+            cur_time = 9
+            for each in spot_seq[key]:
+                if each in small_position:
+                    continue
+                end_time = cur_time + self.spot_feat[each-10001][8]
+                new_plan[key].append([each, self.spot_feat[each-10001][1], cur_time, end_time, self.spot_feat[each-10001][5]])
+                if each in belong:
+                    for j in range(len(belong[each])):
+                        temp_time = cur_time + self.spot_feat[belong[each][j]-10001][8]
+                        new_plan[key].append([belong[each][j], self.spot_feat[belong[each][j]-10001][1], cur_time, end_time, self.spot_feat[belong[each][j]-10001][5]])
+                        cur_time = temp_time
+                        cur_time += 1
+                cur_time = end_time
+                cur_time += 1
+
+        self.plan = new_plan
+        print(self.plan)
+        plan_time = (len(self.plan) - 1) * 24 + list(self.plan.items())[-1][1][-1][-2]
+        self.constraint['all-time'] = plan_time
+        plan_fee = 0
+        for key in self.plan:
+            for each in self.plan[key]:
+                plan_fee += each[4]
+        self.constraint['all-budget'] = plan_fee
+        self.constraint['select-food'] = []
+        self.plan_print = []
+        self.trans = {'bus': [], 'taxi': [], 'walk': []}
+        self.trans_print = []
+        self.score = 0
 
 
 if __name__ == '__main__':

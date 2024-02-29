@@ -53,6 +53,8 @@
             swal('行程定制成功', '共耗时{{data.time}}秒', 'success');
             {% elif code == 200030 %}
             swal('行程定制失败', '请检查您输入的条件', 'error');
+            {% elif code == 200091 %}
+            swal('修改行程成功', '别忘记收藏行程哦！', 'success');
             {% endif %}
         });
         function editSpot() {
@@ -69,14 +71,7 @@
             }
             else {
                 editBtn.innerText = "编辑行程";
-                {% for p in data.plan %}
-                    {% for each in p.2 %}
-                    {% if each.0 == 1 %}
-                    document.getElementById("edit{{each.6}}").style.display="none";
-                    {% endif %}
-                    {% endfor %}
-                {% endfor %}
-
+                document.getElementById("submitEditBtn").click();
             }
         }
         function changeSpot(oldId) {
@@ -86,6 +81,7 @@
                 method:"post",
                 data: {
                     csrfmiddlewaretoken: '{{ csrf_token }}',
+                    signal: 1,
                     old: oldId,
                     new: select.options[select.selectedIndex].value
                 },
@@ -94,9 +90,27 @@
                         swal('替换景点失败', data.data, 'error');
                     }
                     else {
-                        console.log('success');
-                        document.getElementById("spot" + oldId).innerHTML = data.data;
-
+                        document.getElementById("spot" + oldId).innerHTML = data.data.str;
+                        document.getElementById("spot" + oldId).id = "spot" + data.data.id;
+                    }
+                }
+            })
+        }
+        function deleteSpot(oldId) {
+            $.ajax({
+                url:"/plan/",
+                method:"post",
+                data: {
+                    csrfmiddlewaretoken: '{{ csrf_token }}',
+                    signal: 2,
+                    old: oldId
+                },
+                success:function (data) {
+                    if (data.code === 200080) {
+                        swal('删除景点失败', '请检查您的操作！', 'error');
+                    }
+                    else {
+                        document.getElementById("spot" + oldId).remove();
                     }
                 }
             })
@@ -187,14 +201,14 @@
                     <span class="short-title">Design my tour</span>
                     <h2 class="title">定制我的行程</h2>
                     <img class="bottom-shape" src="/assets/images/bottom-bar.png" alt="Bottom Shape">
-                    {% if code == 200031 %}
+                    {% if code == 200031 or code == 200091 %}
                     <div class="col-12" style="margin-top: 75px;">
                         <a href="../plan"><button class="theme-btn" type="button">重新定制行程</button></a>
                     </div>
                     {% endif %}
                 </div>
             </div>
-            {% if code != 200031 %}
+            {% if code != 200031 and code != 200091 %}
             <div class="comment-respond" style="text-align: left;">
                 <form action="#" method="post" class="comment-form">
                     {% csrf_token %}
@@ -245,7 +259,7 @@
     </div>
     <!-- User Constraint End !-->
 
-    {% if code == 200031 %}
+    {% if code == 200031 or code == 200091 %}
     <!-- Plan Show Start !-->
     <div class="blog-area tour-details">
         <div class="container">
@@ -291,7 +305,7 @@
                                     <div class="single-item-list">
                                         <h6>旅程包含</h6>
                                         <ul>
-                                            <li>根据您的选择推荐的{{ data.days}}天景点之旅</li>
+                                            <li>根据您的选择推荐的{{ data.days }}天景点之旅</li>
                                             <li>根据您的喜好推荐的厦门特色美食</li>
                                             <li>根据您的偏好提供的出行交通建议</li>
                                         </ul>
@@ -310,6 +324,11 @@
                             <div class="post-content">
                                 <h4 style="display:inline-block; margin-right:100px;">旅行计划</h4>
                                 <button id="editBtn" name="editBtn" class="theme-btn" onclick="editSpot();">编辑行程</button>
+                                <form action="#" method="post" style="display: none;">
+                                    {% csrf_token %}
+                                    <input id="signal" name="signal" type="number" value="3">
+                                    <button id="submitEditBtn" name="submitEditBtn" class="theme-btn" type="submit"></button>
+                                </form>
                                 <div class="post-card-faq">
                                     <!-- Accordion Start -->
                                     <div class="accordion-wrapper style-two">
@@ -352,7 +371,7 @@
                                                                                 {% endfor %}
                                                                             </select>
                                                                             <button id="changeBtn{{each.6}}" class="theme-btn" type="button" onclick="changeSpot({{each.6}});" style="height: 50px; margin-left: 20px;">替换</button>
-                                                                            <button id="deleteBtn{{each.6}}" class="theme-btn" style="height: 50px; margin-left: 20px;">删除</button>
+                                                                            <button id="deleteBtn{{each.6}}" class="theme-btn" type="button" onclick="deleteSpot({{each.6}});" style="height: 50px; margin-left: 20px;">删除</button>
                                                                         </div>
                                                                     </div>
                                                                 </li>
