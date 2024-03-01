@@ -1,5 +1,7 @@
 import csv
 import json
+import time
+
 import numpy as np
 import requests
 from geopy.distance import geodesic
@@ -121,6 +123,7 @@ class PlanManager:
     def __init__(self, constraint=None):
         self.constraint = constraint    # 约束
         self.all_cost = get_cost()      # 各个景点之间的转移代价
+        self.plan_id = 0
         self.plan = {}                  # 计划 {day1: [poi_id, poi_name, ...]}
         self.plan_situ = {}             # 计划情况 {day1: [是否需要补充行程, [已有poi]]}
         self.plan_print = []
@@ -136,6 +139,7 @@ class PlanManager:
     def reinitial(self, constraint):
         # 清空原来的计划
         self.constraint = constraint
+        self.plan_id = 0
         self.plan = {}
         self.plan_situ = {}
         self.plan_print = []
@@ -148,6 +152,7 @@ class PlanManager:
 
     def callback(self, plan_copy):
         self.constraint = plan_copy.constraint
+        self.plan_id = plan_copy.plan_id
         self.plan = plan_copy.plan
         self.plan_print = plan_copy.plan_print
         self.plan_change = plan_copy.plan_change
@@ -660,6 +665,8 @@ class PlanManager:
             for each in p:
                 if int(each[0] / 10000) == 1:
                     self.plan_change[each[0]] = [0]
+
+        self.plan_id = int(time.time())
 
     def get_trans(self):
         for key in self.plan:

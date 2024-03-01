@@ -98,6 +98,34 @@ def diyplan(request):
             plan_manager.user_score = float(request.POST.get('score'))
             return JsonResponse(Response(200101).res2dict())
 
+        # 收藏
+        if int(request.POST.get('signal')) == 4:
+            collection = Collection()
+            collection.user_id = request.session['user_id']
+            collection.plan_id = plan_manager.plan_id
+            collection.plan = plan_manager.plan_print
+            collection.trans = plan_manager.trans_print
+            if plan_manager.user_score:
+                collection.score = plan_manager.user_score
+            else:
+                collection.score = plan_manager.score
+            collection.days = len(plan_manager.plan)
+            collection.budget = int(plan_manager.constraint['all-budget'])
+            try:
+                collection.save()
+                return JsonResponse(Response(200111).res2dict())
+            except:
+                return JsonResponse(Response(200110).res2dict())
+
+        # 取消收藏
+        if int(request.POST.get('signal')) == 5:
+            plan_id = int(request.POST.get('plan_id'))
+            try:
+                Collection.objects.filter(user_id=request.session['user_id'], plan_id=plan_id).delete()
+                return JsonResponse(Response(200121).res2dict())
+            except:
+                return JsonResponse(Response(200120).res2dict())
+
         old_id = int(request.POST.get('old'))
 
         # 删除行程
@@ -144,7 +172,9 @@ def diyplan(request):
             plan_manager.get_trans()
             plan_manager.get_trans_print()
             plan_manager.evaluate()
-            return render(request, 'plan.html', Response(200091, {'plan': plan_manager.plan_print,
+
+            return render(request, 'plan.html', Response(200091, {'plan_id': plan_manager.plan_id,
+                                                                  'plan': plan_manager.plan_print,
                                                                   'trans': plan_manager.trans_print,
                                                                   'score': round(plan_manager.score / 20, 1),
                                                                   'days': len(plan_manager.plan),
@@ -152,7 +182,8 @@ def diyplan(request):
                                                                   'spots': spots}).res2dict())
         except:
             plan_manager.callback(plan_copy)
-            return render(request, 'plan.html', Response(200090, {'plan': plan_manager.plan_print,
+            return render(request, 'plan.html', Response(200090, {'plan_id': plan_manager.plan_id,
+                                                                  'plan': plan_manager.plan_print,
                                                                   'trans': plan_manager.trans_print,
                                                                   'score': round(plan_manager.score / 20, 1),
                                                                   'days': len(plan_manager.plan),
@@ -250,7 +281,8 @@ def diyplan(request):
                                                               'prefer_trans': prefer_trans, 'select_spot': s_spot,
                                                               'food_type': food_type}).res2dict())
 
-    return render(request, 'plan.html', Response(200031, {'plan': plan_manager.plan_print,
+    return render(request, 'plan.html', Response(200031, {'plan_id': plan_manager.plan_id,
+                                                          'plan': plan_manager.plan_print,
                                                           'trans': plan_manager.trans_print,
                                                           'score': round(plan_manager.score/20, 1),
                                                           'days': len(plan_manager.plan),

@@ -132,10 +132,54 @@
                     }
                     else {
                         swal('评分成功', '感谢您的支持！', 'success');
-                        document.getElementById("scoreBtn").innerHTML = "修改评分";
+                        document.getElementById("star").title = "修改评分";
                     }
                 }
             })
+        }
+        function favoritePlan() {
+            console.log(document.getElementById("heart").title);
+            if (document.getElementById("heart").title === "收藏") {
+                $.ajax({
+                    url:"/plan/",
+                    method:"post",
+                    data: {
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                        signal: 4
+                    },
+                    success:function (data) {
+                        if (data.code === 200110) {
+                            swal('收藏行程失败', '请检查您的操作！', 'error');
+                        }
+                        else {
+                            swal('收藏行程成功', '您可以在【我的收藏】中查看！', 'success');
+                            document.getElementById("heart").style.color = "#FE712A";
+                            document.getElementById("heart").title = "取消收藏";
+                        }
+                    }
+                })
+            }
+            else {
+                $.ajax({
+                    url:"/plan/",
+                    method:"post",
+                    data: {
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                        signal: 5,
+                        plan_id: {{ data.plan_id }}
+                    },
+                    success:function (data) {
+                        if (data.code === 200110) {
+                            swal('取消收藏失败', '请检查您的操作！', 'error');
+                        }
+                        else {
+                            swal('取消收藏成功', '如不收藏，行程将会丢失哦！', 'success');
+                            document.getElementById("heart").style.color = "#3B71FE";
+                            document.getElementById("heart").title = "收藏";
+                        }
+                    }
+                })
+            }
         }
     </script>
 </head>
@@ -344,20 +388,24 @@
                         </div>
                         <div class="post-content-wrapper">
                             <div class="post-content">
-                                <h4 style="display:inline-block; margin-right:100px;">旅行计划</h4>
-                                <button id="editBtn" name="editBtn" class="theme-btn" onclick="editSpot();">编辑行程</button>
-                                <div class="rating" style="display:inline-block; margin-left:30px;">
-                                    <div class="ratting-inner">
-                                        <span><i class="fa-solid fa-star"></i></span>
+                                <h4 style="display: inline-block; margin-right: 270px;">旅行计划</h4>
+                                <div style="margin-top: 35px; display: inline-block;">
+                                    <button id="editBtn" name="editBtn" class="theme-btn" onclick="editSpot();" style="height: 50px;">编辑行程</button>
+                                    <div class="rating" style="display:inline-block; margin-left:30px; margin-right:-20px;">
+                                        <div class="ratting-inner">
+                                            <span><i class="fa-solid fa-star" id="star" title="评分" onclick="scorePlan();"></i></span>
+                                        </div>
                                     </div>
+                                    <input id="scoreInput" type="number" step="0.1" value="0" style="width: 50px;">
+                                    <div class="favorite-icon" style="display:inline-block;">
+                                        <i class="fa-solid fa-heart" id="heart" title="收藏" onclick="favoritePlan();" style="color: #3B71FE; font-size: 20px; margin-left: 10px;"></i>
+                                    </div>
+                                    <form action="#" method="post" style="display: none;">
+                                        {% csrf_token %}
+                                        <input id="signal" name="signal" type="number" value="3">
+                                        <button id="submitEditBtn" name="submitEditBtn" class="theme-btn" type="submit"></button>
+                                    </form>
                                 </div>
-                                <input id="scoreInput" type="number" step="0.1" value="0" style="width: 50px;">
-                                <button id="scoreBtn" name="scoreBtn" class="theme-btn" onclick="scorePlan();" style="margin-left:30px;">评分</button>
-                                <form action="#" method="post" style="display: none;">
-                                    {% csrf_token %}
-                                    <input id="signal" name="signal" type="number" value="3">
-                                    <button id="submitEditBtn" name="submitEditBtn" class="theme-btn" type="submit"></button>
-                                </form>
                                 <div class="post-card-faq">
                                     <!-- Accordion Start -->
                                     <div class="accordion-wrapper style-two">
@@ -437,9 +485,9 @@
                 <div class="col-lg-4 order-1 order-lg-2">
                     <div class="sidebar">
                         <div class="post-content-wrapper">
-                            <div class="post-content" style="margin-top: 970px;">
+                            <div class="post-content" style="margin-top: 1010px;">
                                 <h4>出行交通建议</h4>
-                                <div class="post-card-faq">
+                                <div class="post-card-faq" style="margin-top: 38px;">
                                     <!-- Accordion Start -->
                                     <div class="accordion-wrapper style-two">
                                             <div class="accordion-box-wrapper" id="appointmentAreaStyle1FAW">

@@ -78,3 +78,18 @@ class User(models.Model):
     class Meta:
         managed = True
         db_table = 'user'
+
+
+class Collection(models.Model):
+    user_id = models.IntegerField(primary_key=True)
+    plan_id = models.IntegerField()
+    plan = models.TextField(blank=True, null=True)
+    trans = models.TextField(blank=True, null=True)
+    score = models.FloatField(blank=True, null=True)
+    days = models.IntegerField(blank=True, null=True)
+    budget = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'collection'
+        unique_together = (('user_id', 'plan_id'),)
