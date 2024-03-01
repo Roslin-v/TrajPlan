@@ -91,6 +91,13 @@ def diyplan(request):
 
     # ========== 编辑行程
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        # 评分
+        if int(request.POST.get('signal')) == 3:
+            if float(request.POST.get('score')) < 0 or float(request.POST.get('score')) > 5:
+                return JsonResponse(Response(200100).res2dict())
+            plan_manager.user_score = float(request.POST.get('score'))
+            return JsonResponse(Response(200101).res2dict())
+
         old_id = int(request.POST.get('old'))
 
         # 删除行程

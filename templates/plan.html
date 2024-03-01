@@ -117,6 +117,26 @@
                 }
             })
         }
+        function scorePlan() {
+            $.ajax({
+                url:"/plan/",
+                method:"post",
+                data: {
+                    csrfmiddlewaretoken: '{{ csrf_token }}',
+                    signal: 3,
+                    score: document.getElementById("scoreInput").value
+                },
+                success:function (data) {
+                    if (data.code === 200100) {
+                        swal('评分失败', '分数必须在0-5分之间！', 'error');
+                    }
+                    else {
+                        swal('评分成功', '感谢您的支持！', 'success');
+                        document.getElementById("scoreBtn").innerHTML = "修改评分";
+                    }
+                }
+            })
+        }
     </script>
 </head>
 <body>
@@ -326,6 +346,13 @@
                             <div class="post-content">
                                 <h4 style="display:inline-block; margin-right:100px;">旅行计划</h4>
                                 <button id="editBtn" name="editBtn" class="theme-btn" onclick="editSpot();">编辑行程</button>
+                                <div class="rating" style="display:inline-block; margin-left:30px;">
+                                    <div class="ratting-inner">
+                                        <span><i class="fa-solid fa-star"></i></span>
+                                    </div>
+                                </div>
+                                <input id="scoreInput" type="number" step="0.1" value="0" style="width: 50px;">
+                                <button id="scoreBtn" name="scoreBtn" class="theme-btn" onclick="scorePlan();" style="margin-left:30px;">评分</button>
                                 <form action="#" method="post" style="display: none;">
                                     {% csrf_token %}
                                     <input id="signal" name="signal" type="number" value="3">

@@ -4785,7 +4785,6 @@ body.admin-bar .header-menu-area.sticky_menu {
 }
 
 .rating {
-  position: absolute;
   top: 0;
   z-index: 2;
   right: 0;

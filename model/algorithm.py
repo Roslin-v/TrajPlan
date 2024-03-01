@@ -128,6 +128,7 @@ class PlanManager:
         self.trans = {'bus': [], 'taxi': [], 'walk': []}
         self.trans_print = []
         self.score = 0
+        self.user_score = 0
         self.expand_day = False
         self.spot_feat = load_poi_features('./data/spot.csv')
         self.food_feat = load_poi_features('./data/food.csv')
@@ -142,6 +143,7 @@ class PlanManager:
         self.trans = {'bus': [], 'taxi': [], 'walk': []}
         self.trans_print = []
         self.score = 0
+        self.user_score = 0
         self.expand_day = False
 
     def callback(self, plan_copy):
@@ -152,6 +154,7 @@ class PlanManager:
         self.trans = plan_copy.trans
         self.trans_print = plan_copy.trans_print
         self.score = plan_copy.score
+        self.user_score = plan_copy.user_score
 
     def knapsack(self, budgets, times, B, T):
         # ========== 获取背包的各项初始化数据
@@ -927,6 +930,7 @@ class PlanManager:
         self.trans = {'bus': [], 'taxi': [], 'walk': []}
         self.trans_print = []
         self.score = 0
+        self.user_score = 0
 
 
 if __name__ == '__main__':
