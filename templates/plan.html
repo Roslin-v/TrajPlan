@@ -55,6 +55,8 @@
             swal('行程定制失败', '请检查您输入的条件', 'error');
             {% elif code == 200091 %}
             swal('修改行程成功', '别忘记收藏行程哦！', 'success');
+            {% elif code == 200090 %}
+            swal('修改行程失败', '请检查行程是否重复或安排不合理！', 'error');
             {% endif %}
         });
         function editSpot() {
@@ -91,7 +93,7 @@
                     }
                     else {
                         document.getElementById("spot" + oldId).innerHTML = data.data.str;
-                        document.getElementById("spot" + oldId).id = "spot" + data.data.id;
+                        // document.getElementById("spot" + oldId).id = "spot" + data.data.id;
                     }
                 }
             })
@@ -201,14 +203,14 @@
                     <span class="short-title">Design my tour</span>
                     <h2 class="title">定制我的行程</h2>
                     <img class="bottom-shape" src="/assets/images/bottom-bar.png" alt="Bottom Shape">
-                    {% if code == 200031 or code == 200091 %}
+                    {% if code == 200031 or code == 200091 or code == 200090 %}
                     <div class="col-12" style="margin-top: 75px;">
                         <a href="../plan"><button class="theme-btn" type="button">重新定制行程</button></a>
                     </div>
                     {% endif %}
                 </div>
             </div>
-            {% if code != 200031 and code != 200091 %}
+            {% if code != 200031 and code != 200091 and code != 200090 %}
             <div class="comment-respond" style="text-align: left;">
                 <form action="#" method="post" class="comment-form">
                     {% csrf_token %}
@@ -259,7 +261,7 @@
     </div>
     <!-- User Constraint End !-->
 
-    {% if code == 200031 or code == 200091 %}
+    {% if code == 200031 or code == 200091 or code == 200090 %}
     <!-- Plan Show Start !-->
     <div class="blog-area tour-details">
         <div class="container">

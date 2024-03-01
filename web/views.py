@@ -1,3 +1,4 @@
+import copy
 import time
 
 from django.http import JsonResponse
@@ -94,18 +95,12 @@ def diyplan(request):
 
         # 删除行程
         if int(request.POST.get('signal')) == 2:
-            plan_manager.constraint['select-spot'].remove(old_id)
             plan_manager.plan_change[old_id] = [2]
             return JsonResponse(Response(200081).res2dict())
 
         # 替换行程
         new_id = int(request.POST.get('new'))
-        if new_id in plan_manager.constraint['select-spot']:
-            return JsonResponse(Response(200070, '该景点已存在！').res2dict())
-
         new_info = Spot.objects.filter(id=new_id).values('id', 'name', 'price', 'description', 'pic')[0]
-        plan_manager.constraint['select-spot'].append(new_id)
-        plan_manager.constraint['select-spot'].remove(old_id)
         plan_manager.plan_change[old_id] = [1, new_id]
 
         str_html = "<div class='latest-post-thumb'><img src='/assets/images/" + new_info['pic'] + "' alt='Latest Post'/></div>" \
@@ -116,36 +111,46 @@ def diyplan(request):
             str_html += "<span class='price'>门票：免费</span>"
         if new_info['description']:
             str_html += "<span class ='latest-post-meta'>" + new_info['description'] + "</span >"
-        str_html += ("<div id='edit" + str(new_info['id']) + "' style='margin-top: 25px;'>"
-                    "<select id='changeSelect" + str(new_info['id']) + "' style='width: 200px;'>")
+        str_html += ("<div id='edit" + str(old_id) + "' style='margin-top: 25px;'>"
+                    "<select id='changeSelect" + str(old_id) + "' style='width: 200px;'>")
         for s in spots:
             if new_info['id'] == s['id']:
-                str_html += ("<option id='" + str(new_info['id']) + str(s['id']) + "' value='" + str(s['id']) + "' "
+                str_html += ("<option id='" + str(old_id) + str(s['id']) + "' value='" + str(s['id']) + "' "
                             "selected>" + s['name'] + "</option>")
             else:
-                str_html += ("<option id='" + str(new_info['id']) + str(s['id']) + "' value='" + str(s['id']) + "'>" +
+                str_html += ("<option id='" + str(old_id) + str(s['id']) + "' value='" + str(s['id']) + "'>" +
                             s['name'] + "</option>")
-        str_html += ("</select><button id='changeBtn" + str(new_info['id']) + "' class='theme-btn' type='button' "
-                      "onclick='changeSpot(" + str(new_info['id']) + ");' style='height: 50px; margin-left: 20px;'>"
-                     "替换</button><button id='deleteBtn" + str(new_info['id']) + "' class='theme-btn' "
+        str_html += ("</select><button id='changeBtn" + str(old_id) + "' class='theme-btn' type='button' "
+                      "onclick='changeSpot(" + str(old_id) + ");' style='height: 50px; margin-left: 20px;'>"
+                     "替换</button><button id='deleteBtn" + str(old_id) + "' class='theme-btn' "
                     "style='height: 50px; margin-left: 20px;'>删除</button></div></div>")
 
-        return JsonResponse(Response(200071, {'str': str_html, 'id': new_info['id']}).res2dict())
+        return JsonResponse(Response(200071, {'str': str_html}).res2dict())
 
     # 保存修改的行程
     if request.method == 'POST' and int(request.POST.get('signal', 0)):
-        plan_manager.change_plan()
-        plan_manager.improve_plan()
-        plan_manager.get_plan_print()
-        # plan_manager.get_trans()
-        # plan_manager.get_trans_print()
-        plan_manager.evaluate()
-        return render(request, 'plan.html', Response(200091, {'plan': plan_manager.plan_print,
-                                                              'trans': plan_manager.trans_print,
-                                                              'score': round(plan_manager.score / 20, 1),
-                                                              'days': len(plan_manager.plan),
-                                                              'budget': int(plan_manager.constraint['all-budget']),
-                                                              'spots': spots}).res2dict())
+        plan_copy = copy.deepcopy(plan_manager)
+        try:
+            plan_manager.change_plan()
+            plan_manager.improve_plan()
+            plan_manager.get_plan_print()
+            plan_manager.get_trans()
+            plan_manager.get_trans_print()
+            plan_manager.evaluate()
+            return render(request, 'plan.html', Response(200091, {'plan': plan_manager.plan_print,
+                                                                  'trans': plan_manager.trans_print,
+                                                                  'score': round(plan_manager.score / 20, 1),
+                                                                  'days': len(plan_manager.plan),
+                                                                  'budget': int(plan_manager.constraint['all-budget']),
+                                                                  'spots': spots}).res2dict())
+        except:
+            plan_manager.callback(plan_copy)
+            return render(request, 'plan.html', Response(200090, {'plan': plan_manager.plan_print,
+                                                                  'trans': plan_manager.trans_print,
+                                                                  'score': round(plan_manager.score / 20, 1),
+                                                                  'days': len(plan_manager.plan),
+                                                                  'budget': int(plan_manager.constraint['all-budget']),
+                                                                  'spots': spots}).res2dict())
 
     # ========== 返回定制行程的表单
     category = Food.objects.values('category_id', 'category').distinct().order_by('category_id')
@@ -228,9 +233,9 @@ def diyplan(request):
             plan_manager.plan, plan_manager.constraint = predict(args, 1, plan_manager.plan,
                                                                  plan_manager.constraint, plan_manager.expand_day)
         plan_manager.improve_plan()
-        # plan_manager.get_trans()
+        plan_manager.get_trans()
         plan_manager.get_plan_print()
-        # plan_manager.get_trans_print()
+        plan_manager.get_trans_print()
         plan_manager.evaluate()
     except:
         return render(request, 'plan.html', Response(200030, {'spots': spots, 'foods': cat_double,

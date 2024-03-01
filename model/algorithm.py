@@ -144,6 +144,15 @@ class PlanManager:
         self.score = 0
         self.expand_day = False
 
+    def callback(self, plan_copy):
+        self.constraint = plan_copy.constraint
+        self.plan = plan_copy.plan
+        self.plan_print = plan_copy.plan_print
+        self.plan_change = plan_copy.plan_change
+        self.trans = plan_copy.trans
+        self.trans_print = plan_copy.trans_print
+        self.score = plan_copy.score
+
     def knapsack(self, budgets, times, B, T):
         # ========== 获取背包的各项初始化数据
         nodes = self.constraint['select-spot']
@@ -851,6 +860,17 @@ class PlanManager:
         # print('/100')
 
     def change_plan(self):
+        all_spot = []
+        for key in self.plan_change:
+            if self.plan_change[key][0] == 2:
+                continue
+            cur_id = key
+            if self.plan_change[key][0] == 1:
+                cur_id = self.plan_change[key][1]
+            if cur_id in all_spot:
+                raise ValueError('duplicate spots!')
+            all_spot.append(cur_id)
+        self.constraint['select-spot'] = all_spot
         spot_seq = {}
         belong = {}
         small_position = []
@@ -895,7 +915,6 @@ class PlanManager:
                 cur_time += 1
 
         self.plan = new_plan
-        print(self.plan)
         plan_time = (len(self.plan) - 1) * 24 + list(self.plan.items())[-1][1][-1][-2]
         self.constraint['all-time'] = plan_time
         plan_fee = 0
