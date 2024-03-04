@@ -93,3 +93,14 @@ class Collection(models.Model):
         managed = True
         db_table = 'collection'
         unique_together = (('user_id', 'plan_id'),)
+
+
+class Comment(models.Model):
+    user_id = models.IntegerField()
+    author = models.CharField(max_length=50)
+    type = models.CharField(max_length=20)
+    comment = models.TextField(blank=False, null=False)
+
+    class Meta:
+        managed = True
+        db_table = 'comment'

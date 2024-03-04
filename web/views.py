@@ -512,14 +512,12 @@ def show_favorite(request):
     user_id = request.session['user_id']
     if request.method == 'GET':
         p_id = request.GET.get('p_id', '0')
-        print(user_id, p_id)
         # 展示所有的收藏
         if p_id == '0':
             collects = Collection.objects.filter(user_id=user_id)
             # 有收藏
             if collects:
                 collects = collects.values('plan_id', 'days', 'budget', 'score')
-                print(collects)
                 return render(request, 'favorite.html', Response(200001, collects).res2dict())
             # 没有收藏
             else:
@@ -669,3 +667,26 @@ def show_favorite(request):
 
 def about(request):
     return render(request, 'about.html', Response(200001).res2dict())
+
+
+def contact(request):
+    # 先判断用户是否登录
+    if not request.session.get('is_login', None):
+        return render(request, 'contact.html', Response(200000).res2dict())
+
+    if request.method == 'GET':
+        return render(request, 'contact.html', Response(200001).res2dict())
+
+    comment = Comment()
+    comment.user_id = request.session['user_id']
+    if int(request.POST.get('way')):
+        comment.author = request.POST.get('author')
+    else:
+        comment.author = 'Anonymous'
+    comment.type = request.POST.get('type')
+    comment.comment = request.POST.get('comment')
+    try:
+        Comment.objects.bulk_create([comment])
+        return render(request, 'contact.html', Response(200141).res2dict())
+    except:
+        return render(request, 'contact.html', Response(200140).res2dict())
