@@ -160,13 +160,17 @@
                 })
             }
             else {
+                var plan_id = 0
+                {% if data.plan_id %}
+                plan_id = {{ data.plan_id }}
+                {% endif %}
                 $.ajax({
                     url:"/plan/",
                     method:"post",
                     data: {
                         csrfmiddlewaretoken: '{{ csrf_token }}',
                         signal: 5,
-                        plan_id: {{ data.plan_id }}
+                        plan_id: plan_id
                     },
                     success:function (data) {
                         if (data.code === 200110) {

@@ -112,7 +112,28 @@ def diyplan(request):
             collection.days = len(plan_manager.plan)
             collection.budget = int(plan_manager.constraint['all-budget'])
             try:
-                collection.save()
+                Collection.objects.bulk_create([collection])
+                # 加入用户轨迹，以便后续重新训练
+                user_id = request.session['user_id']
+                increment = 0
+                if Traj.objects.filter(user=(user_id + 200)):
+                    increment = max(Traj.objects.filter(user=(user_id + 200)).values_list('day', flat=True))
+                traj_list = []
+                for key in plan_manager.plan:
+                    seq = 1
+                    for each in plan_manager.plan[key]:
+                        if int(each[0] / 10000) == 1:
+                            traj = Traj()
+                            traj.user = user_id + 200
+                            traj.day = increment + key
+                            traj.seq = seq
+                            traj.name = each[1]
+                            traj.poi = each[0]
+                            traj.time = each[2]
+                            traj.norm = each[2] * 2 / 48
+                            traj_list.append(traj)
+                            seq += 1
+                Traj.objects.bulk_create(traj_list)
                 return JsonResponse(Response(200111).res2dict())
             except:
                 return JsonResponse(Response(200110).res2dict())
@@ -176,7 +197,7 @@ def diyplan(request):
             return render(request, 'plan.html', Response(200091, {'plan_id': plan_manager.plan_id,
                                                                   'plan': plan_manager.plan_print,
                                                                   'trans': plan_manager.trans_print,
-                                                                  'score': round(plan_manager.score / 20, 1),
+                                                                  'score': round(plan_manager.score, 1),
                                                                   'days': len(plan_manager.plan),
                                                                   'budget': int(plan_manager.constraint['all-budget']),
                                                                   'spots': spots}).res2dict())
@@ -185,7 +206,7 @@ def diyplan(request):
             return render(request, 'plan.html', Response(200090, {'plan_id': plan_manager.plan_id,
                                                                   'plan': plan_manager.plan_print,
                                                                   'trans': plan_manager.trans_print,
-                                                                  'score': round(plan_manager.score / 20, 1),
+                                                                  'score': round(plan_manager.score, 1),
                                                                   'days': len(plan_manager.plan),
                                                                   'budget': int(plan_manager.constraint['all-budget']),
                                                                   'spots': spots}).res2dict())
@@ -284,7 +305,7 @@ def diyplan(request):
     return render(request, 'plan.html', Response(200031, {'plan_id': plan_manager.plan_id,
                                                           'plan': plan_manager.plan_print,
                                                           'trans': plan_manager.trans_print,
-                                                          'score': round(plan_manager.score/20, 1),
+                                                          'score': round(plan_manager.score, 1),
                                                           'days': len(plan_manager.plan),
                                                           'budget': int(plan_manager.constraint['all-budget']),
                                                           'time': round(time.time() - start_time, 2),

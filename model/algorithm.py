@@ -865,9 +865,7 @@ class PlanManager:
                     cat.add(self.spot_feat[each[0]-10001][2])
                     spot_time += (each[3] - each[2])
         self.score = 0.5 * len(cat) / 6 + 0.3 * spot_time / play_time + 0.2 * play_time / self.constraint['user-time'] * 2
-        self.score *= 100
-        # print('Score: %.2f' % self.score, end='')
-        # print('/100')
+        self.score *= 5
 
     def change_plan(self):
         all_spot = []
