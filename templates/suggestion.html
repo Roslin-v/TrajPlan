@@ -85,6 +85,7 @@
                                     <li class="dropdown">
                                         <button class="theme-btn">Hello, {{ request.session.user_name }}</button>
                                         <ul class="submenu">
+                                            <li><a href="../favorite">我的收藏</a></li>
                                             <li><a href="../logout">退出登录</a></li>
                                         </ul>
                                     </li>
@@ -272,16 +273,18 @@
                                     <a href="../suggestion?id={{s.id}}" class="image-inner">
                                         <img src="/assets/images/suggestion{{s.id}}.jpg" alt="Location Image" style="height: 250px;">
                                     </a>
-                                    <div class="rating">
-                                        <div class="ratting-inner">
-                                            <span><i class="fa-solid fa-star"></i></span>
-                                            <span class="counter">5.0</span>
-                                        </div>
-                                    </div>
                                 </div>
                                 <div class="content-wrapper">
                                     <div class="content-inner">
-                                        <h3 class="content-title"><a>{{s.name}}</a></h3>
+                                        <div>
+                                            <h3 class="content-title" style="float: left; margin-bottom: -5px;"><a>{{s.name}}</a></h3>
+                                            <div class="rating" style="float: left;">
+                                                <div class="ratting-inner" style="margin-top: -1px; margin-left: 15px;">
+                                                    <span><i class="fa-solid fa-star"></i></span>
+                                                    <span class="counter">5.0</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                         <div class="time-zone">
                                             <div class="time-zone-inner" style="margin-bottom: -20px;">
                                                 <h5 class="price">人均：{{s.price}}元</h5>

@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
     <meta charset="utf-8" />
 
-    <title>鼓浪听涛-定制行程</title>
+    <title>鼓浪听涛-我的收藏</title>
     <link rel="icon" type="image/png" href="/assets/images/logo.svg"/>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -41,102 +41,7 @@
     <script src="/assets/js/custom.js"></script>
     <script src="/assets/js/bootstrap.min.js"></script>
     <script src="/assets/js/multiple-select.min.js"></script>
-
     <script>
-        $(document).ready(function(){
-            {% if code == 200000 %}
-            swal('尚未登录', '请您先登录网站！', 'warning');
-            setTimeout(() => {
-              location.href = "../login";
-            }, 3000)
-            {% elif code == 200031 %}
-            swal('行程定制成功', '共耗时{{data.time}}秒', 'success');
-            {% elif code == 200030 %}
-            swal('行程定制失败', '请检查您输入的条件', 'error');
-            {% elif code == 200091 %}
-            swal('修改行程成功', '别忘记收藏行程哦！', 'success');
-            {% elif code == 200090 %}
-            swal('修改行程失败', '请检查行程是否重复或安排不合理！', 'error');
-            {% endif %}
-        });
-        function editSpot() {
-            var editBtn = document.getElementById("editBtn");
-            if (editBtn.innerText === "编辑行程") {
-                editBtn.innerText = "保存编辑";
-                {% for p in data.plan %}
-                    {% for each in p.2 %}
-                    {% if each.0 == 1 %}
-                    document.getElementById("edit{{each.6}}").style.display="inline-block";
-                    {% endif %}
-                    {% endfor %}
-                {% endfor %}
-            }
-            else {
-                editBtn.innerText = "编辑行程";
-                document.getElementById("submitEditBtn").click();
-            }
-        }
-        function changeSpot(oldId) {
-            var select = document.getElementById("changeSelect" + oldId);
-            $.ajax({
-                url:"/plan/",
-                method:"post",
-                data: {
-                    csrfmiddlewaretoken: '{{ csrf_token }}',
-                    signal: 1,
-                    old: oldId,
-                    new: select.options[select.selectedIndex].value
-                },
-                success:function (data) {
-                    if (data.code === 200070) {
-                        swal('替换景点失败', data.data, 'error');
-                    }
-                    else {
-                        document.getElementById("spot" + oldId).innerHTML = data.data.str;
-                        // document.getElementById("spot" + oldId).id = "spot" + data.data.id;
-                    }
-                }
-            })
-        }
-        function deleteSpot(oldId) {
-            $.ajax({
-                url:"/plan/",
-                method:"post",
-                data: {
-                    csrfmiddlewaretoken: '{{ csrf_token }}',
-                    signal: 2,
-                    old: oldId
-                },
-                success:function (data) {
-                    if (data.code === 200080) {
-                        swal('删除景点失败', '请检查您的操作！', 'error');
-                    }
-                    else {
-                        document.getElementById("spot" + oldId).remove();
-                    }
-                }
-            })
-        }
-        function scorePlan() {
-            $.ajax({
-                url:"/plan/",
-                method:"post",
-                data: {
-                    csrfmiddlewaretoken: '{{ csrf_token }}',
-                    signal: 3,
-                    score: document.getElementById("scoreInput").value
-                },
-                success:function (data) {
-                    if (data.code === 200100) {
-                        swal('评分失败', '分数必须在0-5分之间！', 'error');
-                    }
-                    else {
-                        swal('评分成功', '感谢您的支持！', 'success');
-                        document.getElementById("star").title = "修改评分";
-                    }
-                }
-            })
-        }
         function favoritePlan() {
             console.log(document.getElementById("heart").title);
             if (document.getElementById("heart").title === "收藏") {
@@ -145,7 +50,7 @@
                     method:"post",
                     data: {
                         csrfmiddlewaretoken: '{{ csrf_token }}',
-                        signal: 4
+                        signal: 1
                     },
                     success:function (data) {
                         if (data.code === 200110) {
@@ -165,7 +70,7 @@
                     method:"post",
                     data: {
                         csrfmiddlewaretoken: '{{ csrf_token }}',
-                        signal: 5,
+                        signal: 2,
                         plan_id: {{ data.plan_id }}
                     },
                     success:function (data) {
@@ -244,14 +149,13 @@
     <!-- Header End !-->
 
     <!-- Page Header Start !-->
-    <div class="page-breadcrumb-area page-bg" style="background-image: url('/assets/images/design.jpg')">
-        <!-- <div class="page-overlay"></div> -->
+    <div class="page-breadcrumb-area page-bg" style="background-image: url('/assets/images/xiamen.jpg')">
         <div class="container">
             <div class="row">
                 <div class="col-md-12">
                     <div class="breadcrumb-wrapper">
                         <div class="page-heading">
-                            <h3 class="page-title">定制行程</h3>
+                            <h3 class="page-title">我的收藏</h3>
                         </div>
                     </div>
                 </div>
@@ -260,73 +164,7 @@
     </div>
     <!-- Page Header End !-->
 
-    <!-- User Constraint Start !-->
-    <div class="contact-form-area">
-        <div class="container" align="center">
-            <div class="section-title align-content-center justify-content-center text-center">
-                <div class="sec-content">
-                    <span class="short-title">Design my tour</span>
-                    <h2 class="title">定制我的行程</h2>
-                    <img class="bottom-shape" src="/assets/images/bottom-bar.png" alt="Bottom Shape">
-                    {% if code == 200031 or code == 200091 or code == 200090 %}
-                    <div class="col-12" style="margin-top: 75px;">
-                        <a href="../plan"><button class="theme-btn" type="button">重新定制行程</button></a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            {% if code != 200031 and code != 200091 and code != 200090 %}
-            <div class="comment-respond" style="text-align: left;">
-                <form action="#" method="post" class="comment-form">
-                    {% csrf_token %}
-                    <div class="row g-5">
-                        <div class="col-xl-6">
-                            <label>预计游玩时间（天）：</label>
-                            <input id="user_time" name="user_time" type="number" required="required">
-                        </div>
-                        <div class="col-xl-6">
-                            <label>预算（元）：</label>
-                            <input id="user_budget" name="user_budget" type="number" required="required">
-                        </div>
-                        <div class="col-xl-8">
-                            <label>景点：</label>
-                            <select id="select_spot" name="select_spot" multiple="multiple" required="required">
-                                {% for s in data.spots %}
-                                <option id="{{s.id}}" value="{{s.id}}">{{ s.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-xl-8">
-                            <label>美食：</label>
-                            <select id="food_type" name="food_type" multiple="multiple" required="required">
-                                {% for f in data.foods %}
-                                <optgroup label="{{f.0}}">
-                                    {% for each in f.1 %}
-                                    <option id="{{each.category_id}}" value="{{each.category_id}}">{{each.category}}</option>
-                                    {% endfor %}
-                                </optgroup>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-xl-6">
-                            <label>交通：</label>
-                            <select id="prefer_trans" name="prefer_trans">
-                                <option id="trans0" value="0">公共交通</option>
-                                <option id="trans1" value="1">打车</option>
-                            </select>
-                        </div>
-                        <div class="col-12">
-                            <button class="theme-btn" type="submit">定制我的行程</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-    <!-- User Constraint End !-->
-
-    {% if code == 200031 or code == 200091 or code == 200090 %}
+    {% if code == 200131 %}
     <!-- Plan Show Start !-->
     <div class="blog-area tour-details">
         <div class="container">
@@ -336,7 +174,7 @@
                     <article class="single-post-item">
                         <div class="post-title-wrapper">
                             <h3 class="post-title">
-                                <a href="blog-details.html">鼓浪听涛·鹭岛之旅</a>
+                                <a href="blog-details.html">厦门精华{{ data.days }}日游</a>
                             </h3>
                             <div class="rating">
                                 <div class="ratting-inner">
@@ -362,7 +200,7 @@
                          </div>
                         <div class="post-thumbnail">
                             <a href="#">
-                                <img src="/assets/images/xiamen.jpg" alt="Blog Image" />
+                                <img src="/assets/images/suggestion1.jpg" alt="Blog Image" />
                             </a>
                         </div>
                         <div class="post-content-wrapper">
@@ -391,21 +229,9 @@
                             <div class="post-content">
                                 <h4 style="display: inline-block; margin-right: 270px;">旅行计划</h4>
                                 <div style="margin-top: 35px; display: inline-block;">
-                                    <button id="editBtn" name="editBtn" class="theme-btn" onclick="editSpot();" style="height: 50px;">编辑行程</button>
-                                    <div class="rating" style="display:inline-block; margin-left:30px; margin-right:-20px;">
-                                        <div class="ratting-inner">
-                                            <span><i class="fa-solid fa-star" id="star" title="评分" onclick="scorePlan();"></i></span>
-                                        </div>
-                                    </div>
-                                    <input id="scoreInput" type="number" step="0.1" value="0" style="width: 50px;">
                                     <div class="favorite-icon" style="display:inline-block;">
-                                        <i class="fa-solid fa-heart" id="heart" title="收藏" onclick="favoritePlan();" style="color: #3B71FE; font-size: 20px; margin-left: 10px;"></i>
+                                        <i class="fa-solid fa-heart" id="heart" title="取消收藏" onclick="favoritePlan();" style="color: #FE712A; font-size: 20px; margin-left: 290px;"></i>
                                     </div>
-                                    <form action="#" method="post" style="display: none;">
-                                        {% csrf_token %}
-                                        <input id="signal" name="signal" type="number" value="3">
-                                        <button id="submitEditBtn" name="submitEditBtn" class="theme-btn" type="submit"></button>
-                                    </form>
                                 </div>
                                 <div class="post-card-faq">
                                     <!-- Accordion Start -->
@@ -486,7 +312,7 @@
                 <div class="col-lg-4 order-1 order-lg-2">
                     <div class="sidebar">
                         <div class="post-content-wrapper">
-                            <div class="post-content" style="margin-top: 1010px;">
+                            <div class="post-content" style="margin-top: 880px;">
                                 <h4>出行交通建议</h4>
                                 <div class="post-card-faq" style="margin-top: 38px;">
                                     <!-- Accordion Start -->
@@ -547,6 +373,74 @@
         </div>
     </div>
     <!-- Plan Show End !-->
+    {% else %}
+    <!-- Location Area Start -->
+    <div class="tour-area">
+        <div class="location-area style-1">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="section-title  align-content-center justify-content-center text-center">
+                            <div class="sec-content">
+                                <h2 class="title">我的定制行程</h2>
+                                <img class="bottom-shape" src="/assets/images/bottom-bar.png" alt="Bottom Shape">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% if data %}
+                <div class="isotope-grid">
+                    <div id="card-area" class="row gy-4">
+                        {% for p in data %}
+                        <!--- Single Location Start !-->
+                        <div class="col-lg-4 col-md-6 masonry-portfolio-item wow fadeInUp" data-wow-delay="0s">
+                            <div class="location-card style-2">
+                                <div class="image-wrapper">
+                                    <a href="../favorite?p_id={{p.plan_id}}" class="image-inner">
+                                        <img src="/assets/images/suggestion1.jpg" alt="Location Image" style="height: 250px;">
+                                    </a>
+                                </div>
+                                <div class="content-wrapper">
+                                    <div class="content-inner">
+                                        <div>
+                                            <h3 class="content-title" style="float: left; margin-bottom: -5px;"><a>厦门精华{{p.days}}日游</a></h3>
+                                            <div class="rating" style="float: left;">
+                                                <div class="ratting-inner" style="margin-top: -1px; margin-left: 25px;">
+                                                    <span><i class="fa-solid fa-star"></i></span>
+                                                    <span class="counter">{{p.score}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="time-zone">
+                                            <div class="time-zone-inner" style="margin-bottom: -20px;">
+                                                <h5 class="price">人均：{{p.budget}}元&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;</h5>
+                                            </div>
+                                            <div class="time-zone-inner">
+                                                <i class="fa-solid fa-clock"></i>
+                                                <p class="title">{{ p.days }}天</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!--- Single Location End !-->
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <div style="text-align: center;">
+                    <img src="/assets/images/no-favorite.png" style="max-width: 40%;">
+                    <p style="margin-top: 20px;">您还没有收藏任何行程</p>
+                    <div class="sec-btn justify-content-center text-center" style="margin-top: 30px;">
+                        <a href="../plan"><button class="theme-btn">定制我的行程</button></a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <!-- Location Area End -->
     {% endif %}
 
     <!--- Start Footer !-->
@@ -639,35 +533,5 @@
         </div>
     </div>
     <!-- Scroll Up Section End -->
-
-    <script>
-        $('#select_spot').multipleSelect({
-            placeholder: "请选择您想去的景点",
-            minimumCountSelected: 5,
-            filter: true,
-            selectAll: false,
-        });
-        $('#food_type').multipleSelect({
-            placeholder: "请选择您喜欢的美食种类",
-            minimumCountSelected: 5,
-            filter: true,
-            selectAllText: "全选",
-        });
-        $('#prefer_trans').multipleSelect({
-            placeholder: "请选择您偏好的交通方式",
-        });
-        {% for p in data.plan %}
-            {% for each in p.2 %}
-            {% if each.0 == 1 %}
-            $('#changeSelect{{each.6}}').multipleSelect({
-                minimumCountSelected: 3,
-                filter: true,
-                selectAll: false,
-            });
-            $('#changeSelect{{each.6}}').multipleSelect('setSelects', [{{each.6}}]);
-            {% endif %}
-            {% endfor %}
-        {% endfor %}
-    </script>
 </body>
 </html>

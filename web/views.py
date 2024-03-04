@@ -487,5 +487,164 @@ def show_suggestion(request):
                                                                     'budget': budget, 'plan': plan}).res2dict())
 
 
+def show_favorite(request):
+    user_id = request.session['user_id']
+    if request.method == 'GET':
+        p_id = request.GET.get('p_id', '0')
+        print(user_id, p_id)
+        # 展示所有的收藏
+        if p_id == '0':
+            collects = Collection.objects.filter(user_id=user_id)
+            # 有收藏
+            if collects:
+                collects = collects.values('plan_id', 'days', 'budget', 'score')
+                print(collects)
+                return render(request, 'favorite.html', Response(200001, collects).res2dict())
+            # 没有收藏
+            else:
+                return render(request, 'favorite.html', Response(200001).res2dict())
+        # 展示某个收藏的具体页面
+        else:
+            collect = Collection.objects.filter(user_id=user_id, plan_id=p_id)
+            if collect:
+                collect = collect.values()[0]
+                plan_str = collect['plan']
+                plan = []
+                index_str = 2
+                while index_str < len(plan_str):
+                    day_p = [int(plan_str[index_str])]
+                    left_index = plan_str.index("'", index_str) + 1
+                    right_index = plan_str.index("'", left_index + 1)
+                    day_p.append(plan_str[left_index: right_index])
+                    left_index = right_index + 5
+                    right_index = plan_str.index("]]]", left_index)
+                    temp_list = plan_str[left_index: right_index].split('], [')
+                    temp_p = []
+                    for each in temp_list:
+                        route_list = [int(each[0])]
+                        if int(each[0]) == 1:
+                            left_index = 4
+                            right_index = each.index("'", left_index)
+                            route_list.append(each[left_index: right_index])  # 名字
+                            left_index = right_index + 4
+                            right_index = each.index("'", left_index)
+                            route_list.append(each[left_index: right_index])  # 时间
+                            left_index = right_index + 3
+                            right_index = each.index(",", left_index)
+                            route_list.append(int(each[left_index: right_index]))  # 门票
+                            left_index = right_index + 3
+                            right_index = each.index("'", left_index)
+                            route_list.append(each[left_index: right_index])  # 描述
+                            left_index = right_index + 4
+                            right_index = each.index("'", left_index)
+                            route_list.append(each[left_index: right_index])  # 图片
+                            left_index = right_index + 3
+                            route_list.append(int(each[left_index:]))  # ID
+                        else:
+                            left_index = 4
+                            right_index = each.index("'", left_index)
+                            route_list.append(each[left_index: right_index])  # 名字
+                            left_index = right_index + 3
+                            right_index = each.index(",", left_index)
+                            route_list.append(float(each[left_index: right_index]))
+                            left_index = right_index + 3
+                            right_index = each.index("'", left_index)
+                            route_list.append(each[left_index: right_index])
+                            left_index = right_index + 3
+                            route_list.append(int(each[left_index:]))
+                        temp_p.append(route_list)
+                    day_p.append(temp_p)
+                    plan.append(day_p)
+                    index_str = plan_str.index("]]]", index_str) + 6
+                trans_str = collect['trans']
+                trans = []
+                index_str = 2
+                while index_str < len(trans_str):
+                    day_t = [int(trans_str[index_str])]
+                    left_index = index_str + 6
+                    right_index = trans_str.index(']]]]]', left_index)
+                    temp_list = trans_str[left_index: right_index].split("]], ['")
+                    route_t = []
+                    for each in temp_list:
+                        temp_t = []
+                        left_index = 0
+                        right_index = each.index("'", left_index)
+                        temp_t.append(each[left_index: right_index])
+                        left_index = right_index + 4
+                        right_index = each.index("'", left_index)
+                        temp_t.append(each[left_index: right_index])
+                        way_list = each[right_index + 5:].split("], [")
+                        all_way = []
+                        for way in way_list:
+                            temp_way = [int(way[0])]
+                            left_index = 4
+                            if int(way[0]) == 1:
+                                right_index = way.index("'", left_index)
+                                temp_way.append(way[left_index: right_index])
+                                left_index = right_index + 3
+                                right_index = way.find("]", left_index)
+                                if right_index == -1:
+                                    temp_way.append(int(way[left_index:]))
+                                else:
+                                    temp_way.append(int(way[left_index: right_index]))
+                            elif int(way[0]) == 2:
+                                for i in range(0, 5):
+                                    right_index = way.index("'", left_index)
+                                    temp_way.append(way[left_index: right_index])
+                                    left_index = right_index + 4
+                                left_index = right_index + 3
+                                right_index = way.find("]", left_index)
+                                if right_index == -1:
+                                    temp_way.append(int(way[left_index:]))
+                                else:
+                                    temp_way.append(int(way[left_index: right_index]))
+                            else:
+                                right_index = way.index("'", left_index)
+                                temp_way.append(way[left_index: right_index])
+                                left_index = right_index + 3
+                                right_index = way.index(",", left_index)
+                                temp_way.append(int(way[left_index: right_index]))
+                            all_way.append(temp_way)
+                        temp_t.append(all_way)
+                        route_t.append(temp_t)
+                    day_t.append(route_t)
+                    trans.append(day_t)
+                    index_str = trans_str.index(']]]]]', index_str) + 8
+                return render(request, 'favorite.html', Response(200131, {'plan_id': collect['plan_id'],
+                                                                          'plan': plan,
+                                                                          'trans': trans,
+                                                                          'score': collect['score'],
+                                                                          'days': collect['days'],
+                                                                          'budget': collect['budget']}).res2dict())
+            else:
+                return render(request, 'favorite.html', Response(200130).res2dict())
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        # 收藏
+        if int(request.POST.get('signal')) == 1:
+            collection = Collection()
+            collection.user_id = request.session['user_id']
+            collection.plan_id = int(request.POST.get('plan_id'))
+            collection.plan = request.POST.get('plan')
+            collection.trans = request.POST.get('trans')
+            collection.score = request.POST.get('score')
+            collection.days = int(request.POST.get('days'))
+            collection.budget = int(request.POST.get('budget'))
+            try:
+                collection.save()
+                return JsonResponse(Response(200111).res2dict())
+            except:
+                return JsonResponse(Response(200110).res2dict())
+
+        # 取消收藏
+        if int(request.POST.get('signal')) == 2:
+            plan_id = int(request.POST.get('plan_id'))
+            try:
+                Collection.objects.filter(user_id=request.session['user_id'], plan_id=plan_id).delete()
+                return JsonResponse(Response(200121).res2dict())
+            except:
+                return JsonResponse(Response(200120).res2dict())
+
+
 def about(request):
     return render(request, 'about.html', Response(200001).res2dict())
