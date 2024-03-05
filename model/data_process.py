@@ -14,7 +14,7 @@ def build_traj_graph():
     user_visit = {}  # 每个用户访问过哪些景点
     spot_visit = {}  # 每个景点被哪些用户访问
     # 把所有的POI都加到有向图中
-    spot_df = pd.read_csv(os.path.join('../data/spot.csv'), encoding='ANSI')
+    spot_df = pd.read_csv(os.path.join('../data/spot.csv'))
     for row in spot_df.iterrows():
         G.add_node(row[1][0], checkin_cnt=1)
         spot_visit[row[1][0]] = []
@@ -62,7 +62,7 @@ def build_traj_graph():
 # 构造交通网络图
 def build_trans_graph():
     G = nx.DiGraph()
-    df = pd.read_csv(os.path.join('../data/transportation.csv'), encoding='ANSI')
+    df = pd.read_csv(os.path.join('../data/transportation.csv'))
     trans = list(set(df['trans_id'].to_list()))
     loop = tqdm(trans)
     for tran_id in loop:
@@ -138,7 +138,7 @@ def trans2csv(G):
 
 
 def generate_time():
-    spot_df = pd.read_csv(os.path.join('../data/spot.csv'), encoding='ANSI')
+    spot_df = pd.read_csv(os.path.join('../data/spot.csv'))
     traj_df = pd.read_csv(os.path.join('../data/traj.csv'))
     users = list(set(traj_df['user'].to_list()))
     index = 0
@@ -182,14 +182,14 @@ def load_matrix(path):
 
 # 加载POI特征
 def load_poi_features(path):
-    df = pd.read_csv(path, encoding='ANSI')
+    df = pd.read_csv(path)
     X = df.to_numpy()
     return X
 
 
 # 生成字典
 def initiate_dict():
-    spot_df = pd.read_csv('./data/spot.csv', encoding='ANSI')
+    spot_df = pd.read_csv('./data/spot.csv')
     # food_df = pd.read_csv('../data/food.csv', encoding='ANSI')
     # trans_df = pd.read_csv('../data/transportation.csv', encoding='ANSI')
     # 生成POI ID字典
