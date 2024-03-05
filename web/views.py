@@ -1,6 +1,6 @@
 import copy
 import time
-
+import logging
 from django.http import JsonResponse
 from django.shortcuts import render, HttpResponse, redirect
 from model.train import predict
@@ -13,6 +13,7 @@ from hashlib import sha256
 
 
 plan_manager = PlanManager()
+logger = logging.getLogger(__name__)
 
 
 def index(request):
@@ -203,6 +204,7 @@ def diyplan(request):
                                                                   'spots': spots}).res2dict())
         except:
             plan_manager.callback(plan_copy)
+            logger.error(200090, '\nplan:', plan_manager.plan, '\nchange:', plan_manager.plan_change)
             return render(request, 'plan.html', Response(200090, {'plan_id': plan_manager.plan_id,
                                                                   'plan': plan_manager.plan_print,
                                                                   'trans': plan_manager.trans_print,
@@ -297,6 +299,7 @@ def diyplan(request):
         plan_manager.get_trans_print()
         plan_manager.evaluate()
     except:
+        logger.error(200030, '\nconstraint:', plan_manager.constraint)
         return render(request, 'plan.html', Response(200030, {'spots': spots, 'foods': cat_double,
                                                               'user_time': user_time, 'user_budget': user_budget,
                                                               'prefer_trans': prefer_trans, 'select_spot': s_spot,

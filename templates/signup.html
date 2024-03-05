@@ -46,6 +46,32 @@
             swal('注册失败', '邮箱已注册或信息不符合要求', 'error');
             {% endif %}
         });
+        function passwdRule() {
+          console.log('rule');
+          let passwd = document.getElementById("id_passwd").value;
+          let rule =/^(?=.*[a-z])(?=.*\d)[^]{8,16}$/;
+          let result = rule.test(id_passwd);
+          if (!result) {
+            document.getElementById("passwd-span").innerHTML = "密码必须包含数字、字母，且不少于8位！";
+            return false;
+          }
+          else {
+            document.getElementById("passwd-span").innerHTML = "";
+            return true;
+          }
+        }
+        function passwdConfirm() {
+          let passwd = document.getElementById("id_passwd").value;
+          let confirmPasswd = document.getElementById("id_confirm_passwd").value;
+          if (passwd === confirmPasswd){
+            document.getElementById("confirm-passwd-span").innerHTML = "";
+            document.getElementById("signup-btn").type = "submit";
+          }
+          else {
+            document.getElementById("confirm-passwd-span").innerHTML = "两次输入的密码不一致！";
+            document.getElementById("signup-btn").type = "button";
+          }
+        }
     </script>
 </head>
 <body>
@@ -118,9 +144,15 @@
                             <div class="contacts-phone input-wrapper">
                                 {{ data.passwd.label_tag }}
                                 {{ data.passwd }}
+                                <span id="passwd-span" style="color: red; font-size: 14px;"></span></p>
+                            </div>
+                            <div class="contacts-phone input-wrapper">
+                                {{ data.confirm_passwd.label_tag }}
+                                {{ data.confirm_passwd }}
+                                <span id="confirm-passwd-span" style="color: red; font-size: 14px;"></span></p>
                             </div>
                             <div class="col-12" align="center">
-                                <button class="theme-btn" type="submit">注册</button>
+                                <button class="theme-btn" id="signup-btn" type="submit">注册</button>
                             </div>
                             <div class="col-12" align="center">
                                 <a href="../login"><button class="theme-btn" type="button">已有账号？</button></a>
