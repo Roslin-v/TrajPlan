@@ -46,18 +46,30 @@
             swal('注册失败', '邮箱已注册或信息不符合要求', 'error');
             {% endif %}
         });
+        function emailRule() {
+            let email = document.getElementById("id_email").value;
+            let rule = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z]{2,4})+$/;
+            let result = rule.test(email)
+            if (!result) {
+                document.getElementById("email-span").innerHTML = "请输入正确的邮箱！";
+                document.getElementById("signup-btn").type = "button";
+            }
+            else {
+                document.getElementById("email-span").innerHTML = "";
+                document.getElementById("signup-btn").type = "submit";
+            }
+        }
         function passwdRule() {
-          console.log('rule');
           let passwd = document.getElementById("id_passwd").value;
           let rule =/^(?=.*[a-z])(?=.*\d)[^]{8,16}$/;
-          let result = rule.test(id_passwd);
+          let result = rule.test(passwd);
           if (!result) {
             document.getElementById("passwd-span").innerHTML = "密码必须包含数字、字母，且不少于8位！";
-            return false;
+            document.getElementById("signup-btn").type = "button";
           }
           else {
             document.getElementById("passwd-span").innerHTML = "";
-            return true;
+            document.getElementById("signup-btn").type = "submit";
           }
         }
         function passwdConfirm() {
@@ -189,6 +201,7 @@
                             <div class="contacts-email input-wrapper">
                                 {{ data.email.label_tag }}
                                 {{ data.email }}
+                                <span id="email-span" style="color: red; font-size: 14px;"></span></p>
                             </div>
                             <div class="contacts-phone input-wrapper">
                                 {{ data.passwd.label_tag }}

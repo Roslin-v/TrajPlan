@@ -44,6 +44,8 @@
 
     <script>
         $(document).ready(function(){
+            var w = window.innerWidth * 0.6;
+            document.getElementById("search-widget").style.width = w + "px" ;
             {% if code == 200040 %}
             swal('查询失败', '请检查您输入的关键词！', 'error');
             {% elif code == 200041 %}
@@ -172,7 +174,7 @@
                         <div class="page-heading">
                             <h3 class="page-title">景点</h3>
                         </div>
-                        <div class="widget widget_search">
+                        <div class="widget widget_search" id="search-widget" style="margin-left: 10%;">
                             <form class="search-form" action="#" method="post">
                                 {% csrf_token %}
                                 {% if code == 200041 %}

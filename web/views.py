@@ -185,7 +185,7 @@ def diyplan(request):
         str_html += ("</select><button id='changeBtn" + str(old_id) + "' class='theme-btn' type='button' "
                       "onclick='changeSpot(" + str(old_id) + ");' style='height: 50px; margin-left: 20px;'>"
                      "替换</button><button id='deleteBtn" + str(old_id) + "' class='theme-btn' "
-                    "style='height: 50px; margin-left: 20px;'>删除</button></div></div>")
+                    "onclick='deleteSpot(" + str(old_id) + ");' style='height: 50px; margin-left: 20px;'>删除</button></div></div>")
 
         return JsonResponse(Response(200071, {'str': str_html}).res2dict())
 

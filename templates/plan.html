@@ -444,15 +444,17 @@
                         <div class="post-content-wrapper">
                             <div class="post-content">
                                 <h4 style="display: inline-block; margin-right: 270px;">旅行计划</h4>
-                                <div style="margin-top: 35px; display: inline-block;">
+                                <div style="margin-top: 35px; display: inline flex;">
                                     <button id="editBtn" name="editBtn" class="theme-btn" onclick="editSpot();" style="height: 50px;">编辑行程</button>
-                                    <div class="rating" style="display:inline-block; margin-left:30px; margin-right:-20px;">
+                                    <div style="width: 110px; height: 50px; border: 1px solid #3B71FE; border-radius: 10px; display: inline-block; margin-left: 20px; text-align: center;">
+                                    <div class="rating" style="display:inline-block; line-height: 0; margin-right:-20px;">
                                         <div class="ratting-inner">
                                             <span><i class="fa-solid fa-star" id="star" title="评分" onclick="scorePlan();"></i></span>
                                         </div>
                                     </div>
                                     <input id="scoreInput" type="number" step="0.1" value="0" style="width: 50px;">
-                                    <div class="favorite-icon" style="display:inline-block;">
+                                    </div>
+                                    <div class="favorite-icon" style="display:inline-block; margin-top: 10px; margin-left: 10px;">
                                         <i class="fa-solid fa-heart" id="heart" title="收藏" onclick="favoritePlan();" style="color: #3B71FE; font-size: 20px; margin-left: 10px;"></i>
                                     </div>
                                     <form action="#" method="post" style="display: none;">
@@ -540,7 +542,7 @@
                 <div class="col-lg-4 order-1 order-lg-2">
                     <div class="sidebar">
                         <div class="post-content-wrapper">
-                            <div class="post-content" style="margin-top: 1010px;">
+                            <div class="post-content" style="margin-top: 1002px;">
                                 <h4>出行交通建议</h4>
                                 <div class="post-card-faq" style="margin-top: 38px;">
                                     <!-- Accordion Start -->
