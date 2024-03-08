@@ -6,6 +6,7 @@ import numpy as np
 import requests
 from geopy.distance import geodesic
 import math
+from scipy.spatial import distance
 from .data_process import *
 
 
@@ -509,20 +510,20 @@ class PlanManager:
             self.plan_print.append([key, names[:-1], temp_p])
 
     def recommend_food(self, point1, point2, decadence, position=False):
-        distance = []
+        food_dis = []
         if point1 is not None and point2 is not None:
             line = np.linalg.norm(point1 - point2)
             for i in range(self.food_feat.shape[0]):
                 point = np.array([self.food_feat[i][9], self.food_feat[i][8]])
                 vec1 = point1 - point
                 vec2 = point2 - point
-                distance.append(np.abs(np.cross(vec1, vec2)) / line)
+                food_dis.append(np.abs(np.cross(vec1, vec2)) / line)
         elif point1 is not None and point2 is None:
             for i in range(self.food_feat.shape[0]):
-                distance.append(math.dist(point1, np.array([self.food_feat[i][9], self.food_feat[i][8]])))
+                food_dis.append(distance.euclidean(point1, np.array([self.food_feat[i][9], self.food_feat[i][8]])))
         else:
             return None
-        sorted_id = sorted(range(len(distance)), key=lambda k: distance[k], reverse=False)
+        sorted_id = sorted(range(len(food_dis)), key=lambda k: food_dis[k], reverse=False)
         # 筛选离两个景点最近的前20个餐厅，符合类别要求
         food_cand = []
         comment = []
@@ -827,7 +828,7 @@ class PlanManager:
                                 speed = 1
                                 if bus_type == '普通公交线路' or bus_type == '旅游专线' or bus_type == '微循环公交':
                                     speed = 30 * 16.7
-                                elif bus_type == 'BRT':
+                                elif bus_type == 'BRT' or bus_type == '快速公交系统':
                                     speed = 40 * 16.7
                                 elif bus_type == '地铁线路':
                                     speed = 30 * 16.7

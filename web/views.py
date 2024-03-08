@@ -12,7 +12,7 @@ from .response import Response
 from hashlib import sha256
 
 
-plan_manager = PlanManager()
+all_manager = {}
 logger = logging.getLogger(__name__)
 
 
@@ -89,6 +89,11 @@ def diyplan(request):
         return render(request, 'plan.html', Response(200000).res2dict())
 
     spots = Spot.objects.values('id', 'name')
+
+    # 为每个用户初始化一个manager
+    if request.session['user_id'] not in all_manager:
+        all_manager[request.session['user_id']] = PlanManager()
+    plan_manager = all_manager[request.session['user_id']]
 
     # ========== 编辑行程
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':

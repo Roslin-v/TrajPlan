@@ -567,14 +567,23 @@ def predict(args, cur_user, plan, constraint, expand_day):
     interest_sort = sorted(range(len(interest)), key=lambda k: interest[k], reverse=True)
 
     while True:
+        big_position = set()
+        for key in plan:
+            for each in plan[key]:
+                if raw_X[each[0]-10001][10]:
+                    big_position.add(raw_X[each[0]-10001][10])
+
         # 对于全空的一天，先插入一个热门景点
         if expand_day:
             temp_len = len(plan)
             for each in interest_sort:
-                if (each + 10001) not in constraint['select-spot'] and raw_X[each][10] not in constraint['select-spot'] and raw_X[each][9] == 0:
+                # 没选过+所属地区没选过+下属地区没选过+白天访问
+                if (each + 10001) not in constraint['select-spot'] and raw_X[each][10] not in constraint['select-spot'] and (each + 10001) not in big_position and raw_X[each][9] == 0:
                     constraint['select-spot'].append(each + 10001)
                     constraint['all-budget'] += raw_X[each][5]
                     plan[temp_len+1] = [[each + 10001, raw_X[each][1], 9, 9 + raw_X[each][8], raw_X[each][5]]]
+                    if raw_X[each][10]:
+                        big_position.add(raw_X[each][10])
                     break
 
         # 切割batch
@@ -584,14 +593,11 @@ def predict(args, cur_user, plan, constraint, expand_day):
         sample = [cur_user]
         poi_time = []
         plan_poi = {}
-        big_position = set()
         for key in plan:
             p = plan[key]
             plan_poi[key] = [0, []]   # {day1: 是否需要补充行程, [已有poi]}
             for each in p:
                 plan_poi[key][1].append(each[0])
-                if raw_X[each[0]-10001][10]:
-                    big_position.add(raw_X[each[0]-10001][10])
                 poi_time.append((poi_id_dict[each[0]], each[2] * 2 / 48))
             sample.append(poi_time)
             if p[-1][-2] < 18:  # 结束时间小于18点
@@ -624,19 +630,27 @@ def predict(args, cur_user, plan, constraint, expand_day):
                                 raw_X[plan[key][-1][0] - 10001][10] == (j + 10001)) and (
                                 raw_X[j][10] not in constraint['select-spot'] or plan[key][-1][0] == raw_X[j][10] or
                                 raw_X[plan[key][-1][0] - 10001][10] == raw_X[j][10]) and (
-                                (plan[key][-1][-2] + 1) < 16 or ((plan[key][-1][-2] + 1) >= 16 and raw_X[j][9] == 1)) and (
                                 raw_X[j][5] + constraint['all-budget']) <= constraint['user-budget'] / 2:
+                            # 如果前面是他属的小景点，且自己不是他的大景点，时间约束要从他属大景点开始计算
                             if raw_X[plan[key][-1][0]-10001][10] in constraint['select-spot'] and raw_X[j][10] != raw_X[plan[key][-1][0]-10001][10] and (j+10001) != raw_X[plan[key][-1][0]-10001][10]:
                                 temp_index = 0
                                 for i in range(len(plan[key])):
                                     if plan[key][i][0] == raw_X[plan[key][-1][0]-10001][10]:
                                         temp_index = i
                                         break
-                                if (plan[key][temp_index][-2] + 1 + raw_X[j][8]) > 22:
+                                end_time = (plan[key][temp_index][-2] + 1 + raw_X[j][8])
+                                if (end_time >= 16 and raw_X[j][9] == 0) or end_time > 21:
                                     continue
                                 plan[key].append([j + 10001, raw_X[j][1], plan[key][temp_index][-2] + 1, plan[key][temp_index][-2] + 1 + raw_X[j][8], raw_X[j][5]])
+                            # 如果前面是同属的大景点
+                            elif plan[key][-1][0] == raw_X[j][10]:
+                                end_time = plan[key][-1][2] + raw_X[j][8]
+                                if (end_time >= 16 and raw_X[j][9] == 0) or end_time > 21:
+                                    continue
+                                plan[key].append([j + 10001, raw_X[j][1], plan[key][-1][2], plan[key][-1][2] + raw_X[j][8], raw_X[j][5]])
                             else:
-                                if (plan[key][-1][-2] + 1 + raw_X[j][8]) > 21:
+                                end_time = plan[key][-1][-2] + 1 + raw_X[j][8]
+                                if (end_time >= 16 and raw_X[j][9] == 0) or end_time > 21:
                                     continue
                                 plan[key].append([j + 10001, raw_X[j][1], plan[key][-1][-2] + 1, plan[key][-1][-2] + 1 + raw_X[j][8], raw_X[j][5]])
                             plan_poi[key][1].append(j + 10001)
