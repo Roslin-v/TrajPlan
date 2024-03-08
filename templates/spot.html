@@ -47,66 +47,9 @@
             {% if code == 200040 %}
             swal('查询失败', '请检查您输入的关键词！', 'error');
             {% elif code == 200041 %}
-            swal('查询成功', '请查看您的查询结果！', 'success');
+            swal('查询成功', '共查询到{{data.counts}}条结果！', 'success');
             {% endif %}
         });
-        /*
-        function changePage(order) {
-            var cur_page = document.getElementById("page" + {{data.cur}});
-            cur_page.className = "page-numbers";
-            cur_page.setAttribute('aria-current', "");
-            var index = 0;
-            // 前一页
-            if (order == 1) {
-                index = parseInt(cur_page.id.substr(-1)) - 1;
-            }
-            // 后一页
-            else if (order == 2) {
-                index = parseInt(cur_page.id.substr(-1)) + 1;
-            }
-            // 跳转页面
-            else {
-                index = document.getElementById("jump-page").value();
-                if (index<1 | index>{{data.pages}}) {
-                    swal('跳转失败', '页数错误！', 'error');
-                    return;
-                }
-            }
-            var next_page = document.getElementById("page" + index);
-            next_page.className = "page-numbers current";
-            next_page.setAttribute('aria-current', "page");
-            // 调整箭头是否显示
-            if (index == {{data.pages}}) {
-                document.querySelector('.next.page-numbers').style.display = "none";
-            }
-            if (index == 1) {
-                document.querySelector('.prev.page-numbers').style.display = "none";
-            }
-            if (parseInt(cur_page.id.substr(-1)) == {{data.pages}}) {
-                document.querySelector('.next.page-numbers').style.display = "";
-            }
-            if (parseInt(cur_page.id.substr(-1)) == 1) {
-                document.querySelector('.prev.page-numbers').style.display = "";
-            }
-            var data = {
-                "search": document.getElementById("search").value,
-                "page-num": index,
-                "csrfmiddlewaretoken": '{{ csrf_token }}'
-            };
-            $.ajax({
-                type: "post",
-                url: "../spot/",
-                data: data,
-                success: function(response) {
-                    // 更新页面的部分内容
-                    var index1 = response.indexOf("<!--- Single Location Start !-->", 6000);
-                    var index2 = response.indexOf("<div class=\"basic-pagination\">", 6000) - 90;
-                    var card_area = document.getElementById("card-area");
-                    card_area.innerHTML = response.substr(index1, index2);
-                }
-            });
-        }
-        */
     </script>
 </head>
 <body>
@@ -134,11 +77,12 @@
                     </div>
                     <div class="col-xl-10 col-lg-10 col-md-6 col-6 d-flex align-items-center justify-content-end">
                         <div class="menu d-inline-block">
-                            <nav id="main-menu" class="main-menu">
+                            <div class="mean-push"></div>
+                            <nav id="main-menu" class="main-menu" style="display: none;">
                                 <ul>
                                     <li><a href="../index">主页</a></li>
                                     <li class="dropdown">
-                                        <a href="../tour">旅游资讯</a>
+                                        <a href="#">旅游资讯</a>
                                         <ul class="submenu">
                                             <li><a href="../spot">景点</a></li>
                                             <li><a href="../food">美食</a></li>
@@ -162,6 +106,11 @@
                                 </ul>
                             </nav>
                         </div>
+                        <div class="mobile-menu-bar d-lg-none text-end">
+                            <a href="#" class="mobile-menu-toggle-btn">
+                                <i class="fal fa-bars"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -169,6 +118,49 @@
         <!-- Header Nav Menu End -->
     </header>
     <!-- Header End !-->
+
+    <div class="menu-sidebar-area">
+        <div class="menu-sidebar-wrapper">
+            <div class="menu-sidebar-close">
+                <button class="menu-sidebar-close-btn" id="menu_sidebar_close_btn">
+                    <i class="fal fa-times"></i>
+                </button>
+            </div>
+            <div class="menu-sidebar-content">
+                <div class="menu-sidebar-logo">
+                    <a href="../index">
+                        <img src="/assets/images/logo.svg" alt="logo">
+                    </a>
+                </div>
+                <div class="mobile-nav-menu mean-container">
+                    <div class="mean-bar">
+                        <a href="#nav" class="meanmenu-reveal" style="right: 0px; left: auto; display: inline;">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </a>
+                    </div>
+                </div>
+                <div class="menu-sidebar-content">
+                    <div class="menu-sidebar-single-widget">
+                        <h5 class="menu-sidebar-title">联系我们</h5>
+                        <div class="header-contact-info">
+                            <span>
+                                <i class="fa-solid fa-location-dot">NKU, China</i>
+                            </span>
+                            <span>
+                                <i class="fa-solid fa-envelope">roslin_v@163.com</i>
+                            </span>
+                        </div>
+                        <div class="social-profile">
+                            <a href="https://github.com/Roslin-v"><img src="/assets/images/github.svg"></a>
+                            <a href="https://blog.csdn.net/Roslin_v"><img src="/assets/images/csdn.svg"></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Page Header Start !-->
     <div class="page-breadcrumb-area page-bg" style="background-image: url('/assets/images/xiamen.jpg')">
@@ -353,37 +345,5 @@
         </div>
     </div>
     <!-- Scroll Up Section End -->
-
-    <script>
-        /*
-        function addLi() {
-            var ul = document.querySelector(".justify-content-center");
-            var str = "";
-            if ({{data.pages}}>1) {
-                str += "<li><a class='prev page-numbers' onclick='changePage(1)'><i class='fa fa-arrow-left'></i></a></li>"
-            }
-            else {
-                str += "<li style='display: \'none\''><a class='prev page-numbers' onclick='changePage(2)'><i class='fa fa-arrow-left'></i></a></li>"
-            }
-            str += "<li><span id='page1' class='page-numbers'>1</span></li>";
-            if ({{data.pages}}>1) {
-                for (var i=2; i<={{data.pages}}&&i<=3; i++) {
-                    str += ("<li><span id='page" + i + "' class='page-numbers'>" + i + "</span></li>");
-                }
-                if ({{data.pages}}>3) {
-                    str += "<li><span id='pagedot' class='page-numbers dots'>…</span></li>";
-                }
-                str += "<li><a class='next page-numbers' onclick='changePage(2)'><i class='fa fa-arrow-right'></i></a></li>";
-                str += "<li><input id='jump-page' name='jump-page' type='number' placeholder='页数' style='width:60px;'/></li>"
-                str += "<li><button class='theme-btn' type='button' onClick='changePage(3)'>跳转</button></li>"
-            }
-            ul.innerHTML = str;
-            var cur_page = document.getElementById("page" + {{data.cur}});
-            cur_page.className = "page-numbers current";
-            cur_page.setAttribute('aria-current', "page");
-        }
-        addLi();
-        */
-    </script>
 </body>
 </html>

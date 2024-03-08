@@ -75,11 +75,12 @@
                     </div>
                     <div class="col-xl-10 col-lg-10 col-md-6 col-6 d-flex align-items-center justify-content-end">
                         <div class="menu d-inline-block">
-                            <nav id="main-menu" class="main-menu">
+                            <div class="mean-push"></div>
+                            <nav id="main-menu" class="main-menu" style="display: none;">
                                 <ul>
                                     <li><a href="../index">主页</a></li>
                                     <li class="dropdown">
-                                        <a href="../tour">旅游资讯</a>
+                                        <a href="#">旅游资讯</a>
                                         <ul class="submenu">
                                             <li><a href="../spot">景点</a></li>
                                             <li><a href="../food">美食</a></li>
@@ -92,6 +93,11 @@
                                 </ul>
                             </nav>
                         </div>
+                        <div class="mobile-menu-bar d-lg-none text-end">
+                            <a href="#" class="mobile-menu-toggle-btn">
+                                <i class="fal fa-bars"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -99,6 +105,49 @@
         <!-- Header Nav Menu End -->
     </header>
     <!-- Header End !-->
+
+    <div class="menu-sidebar-area">
+        <div class="menu-sidebar-wrapper">
+            <div class="menu-sidebar-close">
+                <button class="menu-sidebar-close-btn" id="menu_sidebar_close_btn">
+                    <i class="fal fa-times"></i>
+                </button>
+            </div>
+            <div class="menu-sidebar-content">
+                <div class="menu-sidebar-logo">
+                    <a href="../index">
+                        <img src="/assets/images/logo.svg" alt="logo">
+                    </a>
+                </div>
+                <div class="mobile-nav-menu mean-container">
+                    <div class="mean-bar">
+                        <a href="#nav" class="meanmenu-reveal" style="right: 0px; left: auto; display: inline;">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </a>
+                    </div>
+                </div>
+                <div class="menu-sidebar-content">
+                    <div class="menu-sidebar-single-widget">
+                        <h5 class="menu-sidebar-title">联系我们</h5>
+                        <div class="header-contact-info">
+                            <span>
+                                <i class="fa-solid fa-location-dot">NKU, China</i>
+                            </span>
+                            <span>
+                                <i class="fa-solid fa-envelope">roslin_v@163.com</i>
+                            </span>
+                        </div>
+                        <div class="social-profile">
+                            <a href="https://github.com/Roslin-v"><img src="/assets/images/github.svg"></a>
+                            <a href="https://blog.csdn.net/Roslin_v"><img src="/assets/images/csdn.svg"></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Login Start!-->
     <div class="blog-area tour-details">

@@ -330,7 +330,7 @@ def show_spot(request):
                 search_result = Spot.objects.filter(name__icontains=search_spot).values('name', 'score', 'price',
                                                                                         'description', 'pic')
                 return render(request, 'spot.html',
-                              Response(200041, {'spot': search_result, 'search': search_spot}).res2dict())
+                              Response(200041, {'spot': search_result, 'search': search_spot, 'counts': len(search_result)}).res2dict())
             except:
                 code = 200040
 
