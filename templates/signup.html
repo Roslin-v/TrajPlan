@@ -52,11 +52,11 @@
             let result = rule.test(email)
             if (!result) {
                 document.getElementById("email-span").innerHTML = "请输入正确的邮箱！";
-                document.getElementById("signup-btn").type = "button";
+                return false;
             }
             else {
                 document.getElementById("email-span").innerHTML = "";
-                document.getElementById("signup-btn").type = "submit";
+                return true;
             }
         }
         function passwdRule() {
@@ -65,11 +65,11 @@
           let result = rule.test(passwd);
           if (!result) {
             document.getElementById("passwd-span").innerHTML = "密码必须包含数字、字母，且不少于8位！";
-            document.getElementById("signup-btn").type = "button";
+            return false;
           }
           else {
             document.getElementById("passwd-span").innerHTML = "";
-            document.getElementById("signup-btn").type = "submit";
+            return true;
           }
         }
         function passwdConfirm() {
@@ -77,12 +77,18 @@
           let confirmPasswd = document.getElementById("id_confirm_passwd").value;
           if (passwd === confirmPasswd){
             document.getElementById("confirm-passwd-span").innerHTML = "";
-            document.getElementById("signup-btn").type = "submit";
+            return true;
           }
           else {
             document.getElementById("confirm-passwd-span").innerHTML = "两次输入的密码不一致！";
-            document.getElementById("signup-btn").type = "button";
+            return false;
           }
+        }
+        function canSubmit() {
+            if (emailRule() && passwdRule() && passwdConfirm()) {
+                document.getElementById("signup-btn").type = "submit";
+                document.getElementById("signup-btn").click();
+            }
         }
     </script>
 </head>
@@ -214,7 +220,7 @@
                                 <span id="confirm-passwd-span" style="color: red; font-size: 14px;"></span></p>
                             </div>
                             <div class="col-12" align="center">
-                                <button class="theme-btn" id="signup-btn" type="submit">注册</button>
+                                <button class="theme-btn" id="signup-btn" type="button" onclick="canSubmit();">注册</button>
                             </div>
                             <div class="col-12" align="center">
                                 <a href="../login"><button class="theme-btn" type="button">已有账号？</button></a>

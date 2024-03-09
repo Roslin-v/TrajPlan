@@ -61,8 +61,9 @@ def signup(request):
         name = str(signup_form.cleaned_data.get('name'))
         email = str(signup_form.cleaned_data.get('email'))
         password = str(signup_form.cleaned_data.get('passwd'))
-        # 用户已存在，注册失败
-        if User.objects.filter(email=email):
+        confirm = str(signup_form.cleaned_data.get('confirm_passwd'))
+        # 用户已存在/邮箱不符合/密码不符合/确认密码不对，注册失败
+        if User.objects.filter(email=email) or '@' not in email or '.' not in email or len(password) < 8 or len(password) > 16 or password != confirm:
             return render(request, 'signup.html', Response(200020, signup_form).res2dict())
 
         user = User()
