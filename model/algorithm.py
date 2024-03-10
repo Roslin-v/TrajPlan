@@ -221,8 +221,8 @@ class PlanManager:
                 times.append(int(self.spot_feat[each - 10001][8] + 1))   # 多加1小时，粗略算作交通和吃饭时间
         B = int(self.constraint['user-budget'] / 2)  # 留点预算给餐厅
         T = int(self.constraint['user-time'])
-        if T >= 24:  # 如果用户选择超过一天，一天之中最多12h可以实际游玩
-            T /= 2
+        if T >= 24:  # 如果用户选择超过一天，一天之中最多10h可以实际游玩
+            T = (T / 24) * 10
             T = int(T)
         if sum(budgets) > B or sum(times) > T:
             new_pois_index = self.knapsack(budgets, times, B, T)
