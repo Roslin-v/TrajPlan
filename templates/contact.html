@@ -1,17 +1,12 @@
 <!DOCTYPE html>
-<html dir="ltr" lang="zxx">
-
+<html lang="en">
 <head>
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <meta charset="utf-8" />
-    <meta name="description" content="RouteHaven - Travel & Tour Booking HTML5 Template"/>
-    <meta name="keywords"
-        content="travel agency, travel adventures, wanderlust, tourism, agency, vacation planning, trip, journey, exploration, voyage, getaway, adventure, travel guide, holiday destinations"/>
-    <meta name="author" content="BoomDevs" />
 
     <title>鼓浪听涛·意见反馈</title>
 
-    <link rel="icon" type="/assets/image/png" href="images/favicon.png" />
+    <link rel="icon" type="/assets/image/png" href="/assets/images/logo.svg" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -48,12 +43,7 @@
     <script src="/assets/js/multiple-select.min.js"></script>
     <script>
         $(document).ready(function(){
-            {% if code == 200000 %}
-            swal('尚未登录', '请您先登录网站！', 'warning');
-            setTimeout(() => {
-              location.href = "../login";
-            }, 3000)
-            {% elif code == 200141 %}
+            {% if code == 200141 %}
             swal('提交反馈成功', '感谢您的反馈！我们会继续进步的♥', 'success');
             {% elif code == 200140 %}
             swal('提交反馈失败', '请检查您输入的内容！', 'error');

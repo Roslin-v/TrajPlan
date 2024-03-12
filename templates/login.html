@@ -42,7 +42,9 @@
 
     <script>
         $(document).ready(function(){
-            {% if code == 200010 %}
+            {% if code == 200000 %}
+            swal('尚未登录', '请您先登录网站！', 'warning');
+            {% elif code == 200010 %}
             swal('登录失败', '用户名或密码不正确', 'error');
             {% elif code == 200021 %}
             swal('注册成功', '马上登录吧！', 'success');

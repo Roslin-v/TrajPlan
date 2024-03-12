@@ -501,10 +501,15 @@ class PlanManager:
                         time_str += ':30'
                     else:
                         time_str += ':00'
+                    single_name = ""
+                    if self.spot_feat[each[0]-10001][10] in self.constraint['select-spot']:
+                        single_name += self.spot_feat[self.spot_feat[each[0]-10001][10]-10001][1]
+                        single_name += " > "
+                    single_name += each[1]
                     if str(self.spot_feat[each[0]-10001][11]) != 'nan':
-                        temp_p.append([1, each[1], time_str, int(each[4]), self.spot_feat[each[0]-10001][11], self.spot_feat[each[0]-10001][12], each[0]])
+                        temp_p.append([1, single_name, time_str, int(each[4]), self.spot_feat[each[0]-10001][11], self.spot_feat[each[0]-10001][12], each[0]])
                     else:
-                        temp_p.append([1, each[1], time_str, int(each[4]), None, self.spot_feat[each[0]-10001][12], each[0]])
+                        temp_p.append([1, single_name, time_str, int(each[4]), None, self.spot_feat[each[0]-10001][12], each[0]])
                 else:   # 餐厅
                     temp_p.append([2, each[1], each[2], each[3], each[4]])
             self.plan_print.append([key, names[:-1], temp_p])
