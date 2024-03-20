@@ -44,6 +44,8 @@
 
     <script>
         $(document).ready(function(){
+            var top = document.getElementById("plan-heading").offsetTop;
+            document.getElementById("trans-content").style.top = top + "px";
             {% if code == 200031 %}
             swal('行程定制成功', '共耗时{{data.time}}秒', 'success');
             {% elif code == 200030 %}
@@ -438,7 +440,7 @@
                         </div>
                         <div class="post-content-wrapper">
                             <div class="post-content">
-                                <h4 style="display: inline-block; margin-right: 270px;">旅行计划</h4>
+                                <h4 style="display: inline-block; margin-right: 270px;" id="plan-heading">旅行计划</h4>
                                 <div style="margin-top: 35px; display: inline flex;">
                                     <button id="editBtn" name="editBtn" class="theme-btn" onclick="editSpot();" style="height: 50px;">编辑行程</button>
                                     <div style="width: 110px; height: 50px; border: 1px solid #3B71FE; border-radius: 10px; display: inline-block; margin-left: 20px; text-align: center;">
@@ -537,7 +539,7 @@
                 <div class="col-lg-4 order-1 order-lg-2">
                     <div class="sidebar">
                         <div class="post-content-wrapper">
-                            <div class="post-content" style="margin-top: 1002px;">
+                            <div class="post-content" id="trans-content" style="position: absolute;">
                                 <h4>出行交通建议</h4>
                                 <div class="post-card-faq" style="margin-top: 38px;">
                                     <!-- Accordion Start -->
