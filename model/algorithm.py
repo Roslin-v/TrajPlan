@@ -689,7 +689,7 @@ class PlanManager:
                     t_boat = False
                     if p[i][0] == 10001 or self.spot_feat[p[i][0] - 10001][10] == 10001:
                         t_boat = True
-                    user_key = '5d5ca7f300800fb6dbefd46be33986ea'
+                    user_key = ''
                     origin = str(s_long) + ',' + str(s_lat)
                     destination = str(t_long) + ',' + str(t_lat)
                     output = 'json'

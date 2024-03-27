@@ -44,36 +44,35 @@ The technical route is as follows:
 
 ```
 |- Readme.md			// help
-|- assets				// static files used in the web application
+|- assets					// static files used in the web application
 |	|- css
 |	|- fonts
 |	|- images
 |	|- js
 |	|- vendor
-|- config				// Django project settings etc.
+|- config					// Django project settings etc.
 |	|- __init__.py
 |	|- asgi.py
 |	|- settings.py
 |	|- urls.py
 |	|- wsgi.py
-|- data					// data used in model training
-|- model				// algorithms and models used in trajectory plan
+|- data						// data used in model training
+|- model					// algorithms and models used in trajectory plan
 |	|- algorithm		// route planning, recommending etc.
 |	|- data_proces.py	// process data for model training
 |	|- main.py
 |	|- model.py			// model layers
 |	|- parser.py		// parse argument
-|	|- spider.py		// spider web pages
 |	|- train.py			// train and predict next POI
-|- output				// model training output
+|- output					// model training output
 |- templates			// web pages
-|- web					// Django application
+|- web						// Django application
 |	|- __init.py
 |	|- admin.py
 |	|- apps.py
 |	|- forms.py			// process forms in html
 |	|- models.py		// models from database
-|	|- response.py		// response to frontend
+|	|- response.py	// response to frontend
 |	|- views.py			// process requests from frontend
 ```
 
