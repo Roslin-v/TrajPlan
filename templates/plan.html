@@ -44,8 +44,10 @@
 
     <script>
         $(document).ready(function(){
+            {% if code != 200030 %}
             var top = document.getElementById("plan-heading").offsetTop;
             document.getElementById("trans-content").style.top = top + "px";
+            {% endif %}
             {% if code == 200031 %}
             swal('行程定制成功', '共耗时{{data.time}}秒', 'success');
             {% elif code == 200030 %}
@@ -386,9 +388,7 @@
                     <!-- Post Details Start -->
                     <article class="single-post-item">
                         <div class="post-title-wrapper">
-                            <h3 class="post-title">
-                                <a href="blog-details.html">鼓浪听涛·鹭岛之旅</a>
-                            </h3>
+                            <h3 class="post-title">鼓浪听涛·鹭岛之旅</h3>
                             <div class="rating">
                                 <div class="ratting-inner">
                                     <span>
@@ -611,7 +611,7 @@
                         <div class="footer-widget">
                             <div class="footer-widget-logo">
                                 <div class="footer-logo">
-                                    <a href="index.html"><img src="/assets/images/logo.svg" alt="Footer Logo"/></a>
+                                    <a href="../index"><img src="/assets/images/logo.svg" alt="Footer Logo"/></a>
                                 </div>
                             </div>
                         </div>

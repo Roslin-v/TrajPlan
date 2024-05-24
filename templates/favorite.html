@@ -43,14 +43,16 @@
     <script src="/assets/js/multiple-select.min.js"></script>
     <script>
         $(document).ready(function(){
+            {% if code == 200131 %}
             var top = document.getElementById("plan-heading").offsetTop;
             document.getElementById("trans-content").style.top = top + "px";
+            {% endif %}
         });
         function favoritePlan() {
             console.log(document.getElementById("heart").title);
             if (document.getElementById("heart").title === "收藏") {
                 $.ajax({
-                    url:"/plan/",
+                    url:"/favorite/",
                     method:"post",
                     data: {
                         csrfmiddlewaretoken: '{{ csrf_token }}',
@@ -70,7 +72,7 @@
             }
             else {
                 $.ajax({
-                    url:"/plan/",
+                    url:"/favorite/",
                     method:"post",
                     data: {
                         csrfmiddlewaretoken: '{{ csrf_token }}',
@@ -227,9 +229,7 @@
                     <!-- Post Details Start -->
                     <article class="single-post-item">
                         <div class="post-title-wrapper">
-                            <h3 class="post-title">
-                                <a href="blog-details.html">厦门精华{{ data.days }}日游</a>
-                            </h3>
+                            <h3 class="post-title">厦门精华{{ data.days }}日游</h3>
                             <div class="rating">
                                 <div class="ratting-inner">
                                     <span>
@@ -506,7 +506,7 @@
                         <div class="footer-widget">
                             <div class="footer-widget-logo">
                                 <div class="footer-logo">
-                                    <a href="index.html"><img src="/assets/images/logo.svg" alt="Footer Logo"/></a>
+                                    <a href="../index"><img src="/assets/images/logo.svg" alt="Footer Logo"/></a>
                                 </div>
                             </div>
                         </div>
